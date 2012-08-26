@@ -55,6 +55,8 @@ public class ClientGUI extends JFrame implements ActionListener {
 		JMenuBar menubar = new JMenuBar();
 		JMenu filemenu = new JMenu("File");
 		menubar.add(filemenu);
+				
+				//Options Button for the "File" MenuBar
 		JMenuItem item1 = new JMenuItem("Options");
 		item1.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent e){
@@ -74,10 +76,25 @@ public class ClientGUI extends JFrame implements ActionListener {
 				mainpanel.setPreferredSize(new Dimension(300,300));
 				optionWindow.setPreferredSize(new Dimension(300,300));
 				optionWindow.add(mainpanel);
-				optionWindow.setDefaultCloseOperation(EXIT_ON_CLOSE);
+				setDefaultCloseOperation(EXIT_ON_CLOSE);
 				optionWindow.setVisible(true);
 			}});
+		
+		
+				//Exit Button for the "File" MenuBar
+		JMenuItem item2 = new JMenuItem("Exit");
+		item2.addActionListener(new ActionListener()
+		{
+			public void actionPerformed(ActionEvent e)
+			{
+				dispose();
+		        System.exit(0);
+				}
+		});
+		
+		
 		filemenu.add(item1);
+		filemenu.add(item2);
 		setJMenuBar(menubar);
 		// The NorthPanel with:
 		JPanel northPanel = new JPanel(new GridLayout(3,1));
