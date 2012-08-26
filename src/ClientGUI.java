@@ -1,8 +1,25 @@
 
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.GridLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.Random;
+
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
+import javax.swing.SwingConstants;
 
 
 /*
@@ -35,7 +52,33 @@ public class ClientGUI extends JFrame implements ActionListener {
 		super("Chat Client");
 		defaultPort = port;
 		defaultHost = host;
-		
+		JMenuBar menubar = new JMenuBar();
+		JMenu filemenu = new JMenu("File");
+		menubar.add(filemenu);
+		JMenuItem item1 = new JMenuItem("Options");
+		item1.addActionListener(new ActionListener(){
+			public void actionPerformed(ActionEvent e){
+				JFrame optionWindow = new JFrame();
+				JPanel mainpanel = new JPanel();
+				mainpanel.setLayout(new BoxLayout(mainpanel, BoxLayout.Y_AXIS));
+				JPanel pane[] = new JPanel[10];
+				Random rdm =  new Random();
+				for(int x = 0; x < 10; x++){
+					pane[x] = new JPanel();
+					pane[x].setPreferredSize(new Dimension(300,20));
+					pane[x].setBackground(new Color(rdm.nextInt(256),rdm.nextInt(256),rdm.nextInt(256) ));
+					mainpanel.add(pane[x]);
+				}
+				JButton save = new JButton("Save");
+				pane[9].add(save);
+				mainpanel.setPreferredSize(new Dimension(300,300));
+				optionWindow.setPreferredSize(new Dimension(300,300));
+				optionWindow.add(mainpanel);
+				optionWindow.setDefaultCloseOperation(EXIT_ON_CLOSE);
+				optionWindow.setVisible(true);
+			}});
+		filemenu.add(item1);
+		setJMenuBar(menubar);
 		// The NorthPanel with:
 		JPanel northPanel = new JPanel(new GridLayout(3,1));
 		// the server name anmd the port number
