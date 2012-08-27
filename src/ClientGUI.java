@@ -49,7 +49,7 @@ public class ClientGUI extends JFrame implements ActionListener {
 	// Constructor connection receiving a socket number
 	ClientGUI(String host, int port) {
 
-		super("Chat Client");
+		super("ChatterBox Client");
 		defaultPort = port;
 		defaultHost = host;
 		JMenuBar menubar = new JMenuBar();
@@ -82,7 +82,7 @@ public class ClientGUI extends JFrame implements ActionListener {
 			}});
 		
 		
-				//Exit Button for the "File" MenuBar
+				//Exit Button for the "File" Menu
 		JMenuItem item2 = new JMenuItem("Exit");
 		item2.addActionListener(new ActionListener()
 		{
@@ -117,13 +117,14 @@ public class ClientGUI extends JFrame implements ActionListener {
 		// the Label and the TextField
 		label = new JLabel("Enter your username below", SwingConstants.CENTER);
 		northPanel.add(label);
-		tf = new JTextField("Anonymous");
+		tf = new JTextField("MY NAME HERE");
 		tf.setBackground(Color.WHITE);
 		northPanel.add(tf);
 		add(northPanel, BorderLayout.NORTH);
 
 		// The CenterPanel which is the chat room
-		ta = new JTextArea("Welcome to the Chat room\n", 80, 80);
+		ta = new JTextArea("Welcome to ChatterBox\n", 80, 80);
+		ta.setLineWrap(true);
 		JPanel centerPanel = new JPanel(new GridLayout(1,1));
 		centerPanel.add(new JScrollPane(ta));
 		ta.setEditable(false);
