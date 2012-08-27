@@ -6,13 +6,18 @@ import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Random;
-import java.util.regex.Pattern;
 
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenu;
@@ -25,14 +30,41 @@ import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 
 
+
 /*
  * The Client with its GUI
  */
 public class ClientGUI extends JFrame implements ActionListener {
+	private void loadOptions(){
+		/*
+		 * if (file.getName().indexOf(".")==-1){
+                file = new File(file.getAbsolutePath() + ".sav"); //add extension if necessary
+            }
+		 */
+		
+		try{
+			new File("saves").mkdir();
+        JFileChooser fc = new JFileChooser();
+        int returnVal = fc.showSaveDialog(null);
+        if(returnVal == JFileChooser.APPROVE_OPTION){
+            File file = fc.getSelectedFile();
+            FileInputStream fis = new FileInputStream(file);
+    		ObjectInputStream in = new ObjectInputStream(fis);
+			showTime = (Boolean)in.readObject();
+			
+		}}
+		catch(IOException ie){
+			System.out.println(ie + "" );
+		}
+		catch(ClassNotFoundException e){
+			System.out.println(e + "" );
+		}
+	}
 
 	private static final long serialVersionUID = 1L;
 	// show time in message!
 	// 
+	Options options = new Options();
 	private boolean showTime = false;
 	// will first hold "Username:", later on "Enter message"
 	private JLabel label;
@@ -161,7 +193,7 @@ public class ClientGUI extends JFrame implements ActionListener {
 
 	// called by the Client to append text in the TextArea 
 	void append(String str) {
-		if(showTime){
+		if(!showTime){
 			str = str.replaceFirst("\\d{1,2}:\\d{1,2}:\\d{1,2}:\\s", "");
 		}
 		
@@ -264,4 +296,12 @@ public class ClientGUI extends JFrame implements ActionListener {
 	}
 
 }
-
+class Options implements Serializable{
+	public boolean showTime;
+	Options(){
+		
+	}
+	public boolean getShowTime(){
+		return showTime;
+	}
+}
