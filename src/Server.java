@@ -228,6 +228,7 @@ public class Server {
 		public void run() {
 			// to loop until LOGOUT
 			boolean keepGoing = true;
+			broadcast("----" + username + " connected");
 			while(keepGoing) {
 				// read a String (which is an object)
 				try {
@@ -251,6 +252,7 @@ public class Server {
 					break;
 				case ChatMessage.LOGOUT:
 					display(username + " disconnected with a LOGOUT message.");
+					
 					keepGoing = false;
 					break;
 				case ChatMessage.WHOISIN:
@@ -265,6 +267,7 @@ public class Server {
 			}
 			// remove myself from the arrayList containing the list of the
 			// connected Clients
+			broadcast("----" + username + " disconnected");
 			remove(id);
 			close();
 		}

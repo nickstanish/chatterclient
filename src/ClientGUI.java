@@ -8,14 +8,16 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.Random;
 
 import javax.swing.BoxLayout;
+import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
@@ -24,6 +26,7 @@ import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
+import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
@@ -36,38 +39,36 @@ import javax.swing.SwingConstants;
  */
 public class ClientGUI extends JFrame implements ActionListener {
 	private void loadOptions(){
-		/*
-		 * if (file.getName().indexOf(".")==-1){
-                file = new File(file.getAbsolutePath() + ".sav"); //add extension if necessary
-            }
-		 */
-		
-		try{
-			new File("saves").mkdir();
-        JFileChooser fc = new JFileChooser();
-        int returnVal = fc.showSaveDialog(null);
-        if(returnVal == JFileChooser.APPROVE_OPTION){
-            File file = fc.getSelectedFile();
+try{
+			
+            File file = new File("config.ini");
             FileInputStream fis = new FileInputStream(file);
     		ObjectInputStream in = new ObjectInputStream(fis);
 			showTime = (Boolean)in.readObject();
+			defaultusername = (String)in.readObject();
+			in.close();
+			fis.close();
 			
-		}}
+		}
 		catch(IOException ie){
 			System.out.println(ie + "" );
 		}
 		catch(ClassNotFoundException e){
 			System.out.println(e + "" );
 		}
+		catch(Exception e){
+			System.out.println(e);
+		}
 	}
 
 	private static final long serialVersionUID = 1L;
 	// show time in message!
 	// 
-	Options options = new Options();
+	OptionsWindow optionsWindow = new OptionsWindow();
 	private boolean showTime = false;
 	// will first hold "Username:", later on "Enter message"
 	private JLabel label;
+	private String defaultusername = "username";
 	// to hold the Username and later on the messages
 	private JTextField tf;
 	// to hold the server address an the port number
@@ -93,36 +94,23 @@ public class ClientGUI extends JFrame implements ActionListener {
 		JMenuBar menubar = new JMenuBar();
 		JMenu filemenu = new JMenu("File");
 		menubar.add(filemenu);
+		loadOptions();
 				
 				//Options Button for the "File" MenuBar
 		JMenuItem item1 = new JMenuItem("Options");
 		item1.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent e){
-				JFrame optionWindow = new JFrame();
-				JPanel mainpanel = new JPanel();
-				mainpanel.setLayout(new BoxLayout(mainpanel, BoxLayout.Y_AXIS));
-				JPanel pane[] = new JPanel[10];
-				Random rdm =  new Random();
-				for(int x = 0; x < 10; x++){
-					pane[x] = new JPanel();
-					pane[x].setPreferredSize(new Dimension(300,20));
-					pane[x].setBackground(new Color(rdm.nextInt(256),rdm.nextInt(256),rdm.nextInt(256) ));
-					mainpanel.add(pane[x]);
-				}
-				JButton save = new JButton("Save");
-				pane[9].add(save);
-				mainpanel.setPreferredSize(new Dimension(300,300));
-				optionWindow.setPreferredSize(new Dimension(300,300));
-				optionWindow.add(mainpanel);
-				setDefaultCloseOperation(EXIT_ON_CLOSE);
-				optionWindow.pack();
-				optionWindow.setVisible(true);
+				optionsWindow.setVisible(true);
 			}});
 		
-		
+		JMenuItem item2 = new JMenuItem("Refresh Options");
+		item2.addActionListener(new ActionListener(){
+			public void actionPerformed(ActionEvent e){
+				loadOptions();
+			}});
 				//Exit Button for the "File" Menu
-		JMenuItem item2 = new JMenuItem("Exit");
-		item2.addActionListener(new ActionListener()
+		JMenuItem item3 = new JMenuItem("Exit");
+		item3.addActionListener(new ActionListener()
 		{
 			public void actionPerformed(ActionEvent e)
 			{
@@ -134,6 +122,7 @@ public class ClientGUI extends JFrame implements ActionListener {
 		
 		filemenu.add(item1);
 		filemenu.add(item2);
+		filemenu.add(item3);
 		setJMenuBar(menubar);
 		// The NorthPanel with:
 		JPanel northPanel = new JPanel(new GridLayout(3,1));
@@ -155,7 +144,7 @@ public class ClientGUI extends JFrame implements ActionListener {
 		// the Label and the TextField
 		label = new JLabel("Enter your username below", SwingConstants.CENTER);
 		northPanel.add(label);
-		tf = new JTextField("MY NAME HERE");
+		tf = new JTextField(defaultusername);
 		tf.setBackground(Color.WHITE);
 		northPanel.add(tf);
 		add(northPanel, BorderLayout.NORTH);
@@ -194,7 +183,7 @@ public class ClientGUI extends JFrame implements ActionListener {
 	// called by the Client to append text in the TextArea 
 	void append(String str) {
 		if(!showTime){
-			str = str.replaceFirst("\\d{1,2}:\\d{1,2}:\\d{1,2}:\\s", "");
+			str = str.replaceFirst("\\d{1,2}:\\d{1,2}:\\d{1,2}[:\\s]{1,2}", "");
 		}
 		
 		ta.append(str);
@@ -207,7 +196,7 @@ public class ClientGUI extends JFrame implements ActionListener {
 		logout.setEnabled(false);
 		whoIsIn.setEnabled(false);
 		label.setText("Enter your username below");
-		tf.setText("Anonymous");
+		tf.setText(defaultusername);
 		// reset port number and host name as a construction time
 		tfPort.setText("" + defaultPort);
 		tfServer.setText(defaultHost);
@@ -296,12 +285,96 @@ public class ClientGUI extends JFrame implements ActionListener {
 	}
 
 }
-class Options implements Serializable{
-	public boolean showTime;
-	Options(){
+
+class OptionsWindow extends JFrame implements Serializable{
+	/**
+	 * 
+	 */
+	private boolean showTime = true;
+	private String defaultusername = "username";
+	ButtonGroup showTimeGroup = new ButtonGroup();
+	JRadioButton showTimeOn = new JRadioButton("Yes");
+	JRadioButton showTimeOff = new JRadioButton("No");
+	JTextField defaultnameField = new JTextField(defaultusername);
+	private static final long serialVersionUID = 2748129716144166752L;
+	JPanel mainpanel = new JPanel();
+	OptionsWindow(){
+		loadOptions();
+		showTimeOn.setSelected(showTime);
+		showTimeOff.setSelected(!showTime);
+		defaultnameField.setText(defaultusername);
+		mainpanel.setLayout(new BoxLayout(mainpanel, BoxLayout.Y_AXIS));
+		JPanel pane[] = new JPanel[10];
+		for(int x = 0; x < 10; x++){
+			pane[x] = new JPanel();
+			pane[x].setPreferredSize(new Dimension(300,20));
+			mainpanel.add(pane[x]);
+		}
+
+		showTimeGroup.add(showTimeOn);
+		showTimeGroup.add(showTimeOff);
+		JLabel showTimeLabel = new JLabel("Show time of message? ");
+		JLabel setDefaultUsername = new JLabel("Set default username: ");
+		pane[0].add(new JLabel("OPTIONS"));
+		pane[1].add(showTimeLabel);
+		pane[1].add(showTimeOn);
+		pane[1].add(showTimeOff);
+		pane[2].add(setDefaultUsername);
+		pane[2].add(defaultnameField);
+		JButton save = new JButton("Save");
+		save.addActionListener(new ActionListener(){
+			public void actionPerformed(ActionEvent e){
+				saveOptions();
+			}
+		});
+		pane[8].add(save);
+		mainpanel.setPreferredSize(new Dimension(300,300));
+		setSize(300,300);
+		add(mainpanel);
+		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		pack();
+
+	}
+	private void saveOptions(){
+		//add serializable shit here\
+		//file == config.ini
+		showTime = showTimeOn.isSelected();
+		defaultusername = defaultnameField.getText();
+		try{
+    		FileOutputStream fos = new FileOutputStream(new File("config.ini"));
+    		ObjectOutputStream out = new ObjectOutputStream(fos);
+    		out.writeObject(showTime);
+    		out.writeObject(defaultusername);
+    		out.close();
+    		fos.close();
+		}
+		catch(IOException ie){
+			System.out.println("" + ie);
+		}
+		this.dispose();
 		
 	}
-	public boolean getShowTime(){
-		return showTime;
+	private void loadOptions(){
+		try{
+			
+            File file = new File("config.ini");
+            FileInputStream fis = new FileInputStream(file);
+    		ObjectInputStream in = new ObjectInputStream(fis);
+			showTime = (Boolean)in.readObject();
+			defaultusername = (String)in.readObject();
+			in.close();
+			fis.close();
+			
+		}
+		catch(IOException ie){
+			System.out.println(ie + "" );
+		}
+		catch(ClassNotFoundException e){
+			System.out.println(e + "" );
+		}
+		catch(Exception e){
+			System.out.println(e);
+			
+		}
 	}
 }
