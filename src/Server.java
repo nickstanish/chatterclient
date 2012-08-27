@@ -37,7 +37,7 @@ public class Server {
 		// the port
 		this.port = port;
 		// to display hh:mm:ss
-		sdf = new SimpleDateFormat("h:mm");
+		sdf = new SimpleDateFormat("h:mm:ss:");
 		// ArrayList for the Client list
 		al = new ArrayList<ClientThread>();
 	}

@@ -1,8 +1,12 @@
 
 
-import java.net.*;
-import java.io.*;
-import java.util.*;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.net.Socket;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Scanner;
 
 /*
  * The Client that can be run both as a console or a GUI
@@ -152,8 +156,10 @@ public class Client  {
 	 * In console mode, if an error occurs the program simply stops
 	 * when a GUI id used, the GUI is informed of the disconnection
 	 */
+	
 	public static void main(String[] args) {
 		// default values
+		SimpleDateFormat sdf = new SimpleDateFormat("h:mm:ss:");
 		int portNumber = 1500;
 		String serverAddress = "data.cs.purdue.edu";
 		String userName = "Anonymous";
@@ -200,16 +206,16 @@ public class Client  {
 			String msg = scan.nextLine();
 			// logout if message is LOGOUT
 			if(msg.equalsIgnoreCase("LOGOUT")) {
-				client.sendMessage(new ChatMessage(ChatMessage.LOGOUT, ""));
+				client.sendMessage(new ChatMessage(ChatMessage.LOGOUT, "", sdf.format(new Date()) + ""));
 				// break to do the disconnect
 				break;
 			}
 			// message WhoIsIn
 			else if(msg.equalsIgnoreCase("WHOISIN")) {
-				client.sendMessage(new ChatMessage(ChatMessage.WHOISIN, ""));				
+				client.sendMessage(new ChatMessage(ChatMessage.WHOISIN, "", sdf.format(new Date()) + ""));				
 			}
 			else {				// default to ordinary message
-				client.sendMessage(new ChatMessage(ChatMessage.MESSAGE, msg));
+				client.sendMessage(new ChatMessage(ChatMessage.MESSAGE, msg, sdf.format(new Date()) + ""));
 			}
 		}
 		// done disconnect

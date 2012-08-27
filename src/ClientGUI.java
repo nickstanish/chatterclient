@@ -6,7 +6,10 @@ import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Random;
+import java.util.regex.Pattern;
 
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
@@ -28,6 +31,9 @@ import javax.swing.SwingConstants;
 public class ClientGUI extends JFrame implements ActionListener {
 
 	private static final long serialVersionUID = 1L;
+	// show time in message!
+	// 
+	private boolean showTime = false;
 	// will first hold "Username:", later on "Enter message"
 	private JLabel label;
 	// to hold the Username and later on the messages
@@ -155,6 +161,10 @@ public class ClientGUI extends JFrame implements ActionListener {
 
 	// called by the Client to append text in the TextArea 
 	void append(String str) {
+		if(showTime){
+			str = str.replaceFirst("\\d{1,2}:\\d{1,2}:\\d{1,2}:\\s", "");
+		}
+		
 		ta.append(str);
 		ta.setCaretPosition(ta.getText().length() - 1);
 	}
@@ -180,23 +190,24 @@ public class ClientGUI extends JFrame implements ActionListener {
 	/*
 	* Button or JTextField clicked
 	*/
+	private SimpleDateFormat sdf = new SimpleDateFormat("h:mm:ss:");
 	public void actionPerformed(ActionEvent e) {
 		Object o = e.getSource();
 		// if it is the Logout button
 		if(o == logout) {
-			client.sendMessage(new ChatMessage(ChatMessage.LOGOUT, ""));
+			client.sendMessage(new ChatMessage(ChatMessage.LOGOUT, "", sdf.format(new Date()) + ""));
 			return;
 		}
 		// if it the who is in button
 		if(o == whoIsIn) {
-			client.sendMessage(new ChatMessage(ChatMessage.WHOISIN, ""));				
+			client.sendMessage(new ChatMessage(ChatMessage.WHOISIN, "", sdf.format(new Date()) + ""));				
 			return;
 		}
 
 		// ok it is coming from the JTextField
 		if(connected) {
 			// just have to send the message
-			client.sendMessage(new ChatMessage(ChatMessage.MESSAGE, tf.getText()));				
+			client.sendMessage(new ChatMessage(ChatMessage.MESSAGE, tf.getText(), sdf.format(new Date()) + ""));				
 			tf.setText("");
 			return;
 		}
