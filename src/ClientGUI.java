@@ -77,6 +77,7 @@ public class ClientGUI extends JFrame implements ActionListener {
 				optionWindow.setPreferredSize(new Dimension(300,300));
 				optionWindow.add(mainpanel);
 				setDefaultCloseOperation(EXIT_ON_CLOSE);
+				optionWindow.pack();
 				optionWindow.setVisible(true);
 			}});
 		
