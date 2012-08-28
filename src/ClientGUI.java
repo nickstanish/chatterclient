@@ -157,8 +157,6 @@ try{
 		// The CenterPanel which is the chat room
 		ta = new CTextArea(bgImage);
 		ta.append("Welcome to ChatterBox\n");
-		ta.append("Welcome to ChatterBox\n");
-		ta.append("Welcome to ChatterBox\n");
 		ta.setLineWrap(true);
 		JPanel centerPanel = new JPanel(new GridLayout(1,1));
 		centerPanel.add(new JScrollPane(ta));
