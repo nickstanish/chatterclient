@@ -3,9 +3,14 @@
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.GridLayout;
+import java.awt.Rectangle;
+import java.awt.TexturePaint;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -16,10 +21,10 @@ import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import javax.imageio.ImageIO;
 import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
-import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenu;
@@ -38,6 +43,7 @@ import javax.swing.SwingConstants;
  * The Client with its GUI
  */
 public class ClientGUI extends JFrame implements ActionListener {
+	File bgImage = new File("media/background.png");
 	private void loadOptions(){
 try{
 			
@@ -76,7 +82,7 @@ try{
 	// to Logout and get the list of the users
 	private JButton login, logout, whoIsIn;
 	// for the chat room
-	private JTextArea ta;
+	private CTextArea ta;
 	// if it is for connection
 	private boolean connected;
 	// the Client object
@@ -95,7 +101,6 @@ try{
 		JMenu filemenu = new JMenu("File");
 		menubar.add(filemenu);
 		loadOptions();
-				
 				//Options Button for the "File" MenuBar
 		JMenuItem item1 = new JMenuItem("Options");
 		item1.addActionListener(new ActionListener(){
@@ -142,15 +147,18 @@ try{
 		northPanel.add(serverAndPort);
 
 		// the Label and the TextField
-		label = new JLabel("Enter your username below", SwingConstants.CENTER);
-		northPanel.add(label);
+		label = new JLabel("Enter your username above", SwingConstants.CENTER);
+		//northPanel.add(label);
 		tf = new JTextField(defaultusername);
 		tf.setBackground(Color.WHITE);
-		northPanel.add(tf);
+		//northPanel.add(tf);
 		add(northPanel, BorderLayout.NORTH);
 
 		// The CenterPanel which is the chat room
-		ta = new JTextArea("Welcome to ChatterBox\n", 80, 80);
+		ta = new CTextArea(bgImage);
+		ta.append("Welcome to ChatterBox\n");
+		ta.append("Welcome to ChatterBox\n");
+		ta.append("Welcome to ChatterBox\n");
 		ta.setLineWrap(true);
 		JPanel centerPanel = new JPanel(new GridLayout(1,1));
 		centerPanel.add(new JScrollPane(ta));
@@ -168,9 +176,18 @@ try{
 		whoIsIn.setEnabled(false);		// you have to login before being able to Who is in
 
 		JPanel southPanel = new JPanel();
-		southPanel.add(login);
-		southPanel.add(logout);
-		southPanel.add(whoIsIn);
+		southPanel.setLayout(new BoxLayout(southPanel, BoxLayout.Y_AXIS));
+		JPanel pane1 = new JPanel();
+		pane1.setLayout(new BoxLayout(pane1, BoxLayout.Y_AXIS));
+		pane1.add(tf);
+		pane1.add(label);
+		JPanel pane2 = new JPanel();
+		pane2.setLayout(new BoxLayout(pane2, BoxLayout.X_AXIS));
+		southPanel.add(pane1);
+		pane2.add(login);
+		pane2.add(logout);
+		pane2.add(whoIsIn);
+		southPanel.add(pane2);
 		add(southPanel, BorderLayout.SOUTH);
 
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
@@ -195,7 +212,7 @@ try{
 		login.setEnabled(true);
 		logout.setEnabled(false);
 		whoIsIn.setEnabled(false);
-		label.setText("Enter your username below");
+		label.setText("Enter your username above");
 		tf.setText(defaultusername);
 		// reset port number and host name as a construction time
 		tfPort.setText("" + defaultPort);
@@ -262,7 +279,7 @@ try{
 			if(!client.start()) 
 				return;
 			tf.setText("");
-			label.setText("Enter your message below");
+			label.setText("Enter your message above");
 			connected = true;
 			
 			// disable login button
@@ -377,4 +394,36 @@ class OptionsWindow extends JFrame implements Serializable{
 			
 		}
 	}
+}
+class CTextArea extends JTextArea{
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -217191299156683782L;
+	private BufferedImage bufferedImage;
+	private TexturePaint texturePaint;
+	CTextArea(File file){
+		super();
+		try{
+			bufferedImage = ImageIO.read(file);
+		    Rectangle rect = new Rectangle(0, 0, bufferedImage.getWidth(null), bufferedImage.getHeight(null));
+		    texturePaint = new TexturePaint(bufferedImage, rect);
+		    setOpaque(false);
+		}
+		catch(IOException ie){
+			System.out.println(ie);
+			append("Bacground Media Not Found: " + file + "\n");
+		}
+	    
+	}
+	 public void paintComponent(Graphics g)
+	  {
+		 if(bufferedImage!= null){
+			 Graphics2D g2 = (Graphics2D) g;
+			 g2.setPaint(texturePaint);
+		 }
+	    
+	    g.fillRect(0, 0, getWidth(), getHeight());
+	    super.paintComponent(g);
+	  }
 }
