@@ -4,8 +4,6 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.Scanner;
 
 /*
@@ -159,7 +157,6 @@ public class Client  {
 	
 	public static void main(String[] args) {
 		// default values
-		SimpleDateFormat sdf = new SimpleDateFormat("h:mm:ss:");
 		int portNumber = 1500;
 		String serverAddress = "data.cs.purdue.edu";
 		String userName = "Anonymous";
@@ -206,16 +203,16 @@ public class Client  {
 			String msg = scan.nextLine();
 			// logout if message is LOGOUT
 			if(msg.equalsIgnoreCase("LOGOUT")) {
-				client.sendMessage(new ChatMessage(ChatMessage.LOGOUT, "", sdf.format(new Date()) + ""));
+				client.sendMessage(new ChatMessage(ChatMessage.LOGOUT, ""));
 				// break to do the disconnect
 				break;
 			}
 			// message WhoIsIn
 			else if(msg.equalsIgnoreCase("WHOISIN")) {
-				client.sendMessage(new ChatMessage(ChatMessage.WHOISIN, "", sdf.format(new Date()) + ""));				
+				client.sendMessage(new ChatMessage(ChatMessage.WHOISIN, ""));				
 			}
 			else {				// default to ordinary message
-				client.sendMessage(new ChatMessage(ChatMessage.MESSAGE, msg, sdf.format(new Date()) + ""));
+				client.sendMessage(new ChatMessage(ChatMessage.MESSAGE, msg));
 			}
 		}
 		// done disconnect

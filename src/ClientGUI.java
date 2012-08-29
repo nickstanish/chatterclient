@@ -18,8 +18,6 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 
 import javax.imageio.ImageIO;
 import javax.swing.BoxLayout;
@@ -226,24 +224,23 @@ try{
 	/*
 	* Button or JTextField clicked
 	*/
-	private SimpleDateFormat sdf = new SimpleDateFormat("h:mm:ss:");
 	public void actionPerformed(ActionEvent e) {
 		Object o = e.getSource();
 		// if it is the Logout button
 		if(o == logout) {
-			client.sendMessage(new ChatMessage(ChatMessage.LOGOUT, "", sdf.format(new Date()) + ""));
+			client.sendMessage(new ChatMessage(ChatMessage.LOGOUT, ""));
 			return;
 		}
 		// if it the who is in button
 		if(o == whoIsIn) {
-			client.sendMessage(new ChatMessage(ChatMessage.WHOISIN, "", sdf.format(new Date()) + ""));				
+			client.sendMessage(new ChatMessage(ChatMessage.WHOISIN, ""));				
 			return;
 		}
 
 		// ok it is coming from the JTextField
 		if(connected) {
 			// just have to send the message
-			client.sendMessage(new ChatMessage(ChatMessage.MESSAGE, tf.getText(), sdf.format(new Date()) + ""));				
+			client.sendMessage(new ChatMessage(ChatMessage.MESSAGE, tf.getText()));				
 			tf.setText("");
 			return;
 		}

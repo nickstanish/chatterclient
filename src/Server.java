@@ -228,7 +228,7 @@ public class Server {
 		public void run() {
 			// to loop until LOGOUT
 			boolean keepGoing = true;
-			broadcast("----" + username + " connected");
+			broadcast(".:." + username + " connected" + ".:.");
 			while(keepGoing) {
 				// read a String (which is an object)
 				try {
@@ -267,7 +267,7 @@ public class Server {
 			}
 			// remove myself from the arrayList containing the list of the
 			// connected Clients
-			broadcast("----" + username + " disconnected");
+			broadcast(".:." + username + " disconnected" + ".:.");
 			remove(id);
 			close();
 		}

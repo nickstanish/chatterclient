@@ -18,13 +18,11 @@ public class ChatMessage implements Serializable {
 	static final int WHOISIN = 0, MESSAGE = 1, LOGOUT = 2;
 	private int type;
 	private String message;
-	private String date;
 	
 	// constructor
-	ChatMessage(int type, String message, String date) {
+	ChatMessage(int type, String message) {
 		this.type = type;
 		this.message = message;
-		this.date = date;
 	}
 	
 	// getters
@@ -33,9 +31,6 @@ public class ChatMessage implements Serializable {
 	}
 	String getMessage() {
 		return message;
-	}
-	String getDate(){
-		return date;
 	}
 }
 
