@@ -407,7 +407,7 @@ class CTextArea extends JTextArea{
 		}
 		catch(IOException ie){
 			System.out.println(ie);
-			append("Bacground Media Not Found: " + file + "\n");
+			append("Background Media Not Found: " + file + "\n");
 		}
 	    
 	}
