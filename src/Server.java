@@ -9,6 +9,7 @@ public class Server {
 	private static int connectionId;
 	// an ArrayList to keep the list of the Client
 	private ArrayList<ClientThread> al;
+	private double version = 1.0;
 	// to display time
 	private SimpleDateFormat dateFormat;
 	private int port;
@@ -28,6 +29,7 @@ public class Server {
 	
 	public void start() {
 		keepGoing = true;
+		System.out.println("Starting ChatterBox Server " + version);
 		/* create socket server and wait for connection requests */
 		try {
 			// the socket used by the server
