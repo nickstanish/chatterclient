@@ -1,4 +1,4 @@
-
+/*
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -40,10 +40,11 @@ import javax.swing.SwingConstants;
 /*
  * The Client with its GUI
  */
+/*
 public class ClientGUI extends JFrame implements ActionListener {
 	File bgImage = new File("media/background.png");
 	private void loadOptions(){
-try{
+		try{
 			
             File file = new File("config.ini");
             FileInputStream fis = new FileInputStream(file);
@@ -66,10 +67,9 @@ try{
 	}
 
 	private static final long serialVersionUID = 1L;
-	// show time in message!
 	// 
 	OptionsWindow optionsWindow = new OptionsWindow();
-	private boolean showTime = false;
+	private boolean showTime = true; //default
 	// will first hold "Username:", later on "Enter message"
 	private JLabel label;
 	private String defaultusername = "username";
@@ -196,7 +196,8 @@ try{
 	// called by the Client to append text in the TextArea 
 	void append(String str) {
 		if(!showTime){
-			str = str.replaceFirst("\\d{1,2}:\\d{1,2}:\\d{1,2}[:\\s]{1,2}", "");
+			//fix whoisin time parse bug with a start of line regex - 9/2/12
+			str = str.replaceFirst("^(\\d{1,2}:\\d{1,2}:\\d{1,2}[:\\s]{1,2})", "");
 		}
 		
 		ta.append(str);
@@ -224,6 +225,7 @@ try{
 	/*
 	* Button or JTextField clicked
 	*/
+/*
 	public void actionPerformed(ActionEvent e) {
 		Object o = e.getSource();
 		// if it is the Logout button
@@ -302,6 +304,7 @@ class OptionsWindow extends JFrame implements Serializable{
 	/**
 	 * 
 	 */
+/*
 	private boolean showTime = true;
 	private String defaultusername = "username";
 	ButtonGroup showTimeGroup = new ButtonGroup();
@@ -394,6 +397,7 @@ class CTextArea extends JTextArea{
 	/**
 	 * 
 	 */
+/*
 	private static final long serialVersionUID = -217191299156683782L;
 	private BufferedImage bufferedImage;
 	private TexturePaint texturePaint;
@@ -422,3 +426,5 @@ class CTextArea extends JTextArea{
 	    super.paintComponent(g);
 	  }
 }
+
+*/

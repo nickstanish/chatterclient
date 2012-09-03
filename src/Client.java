@@ -1,4 +1,4 @@
-
+/*
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -9,6 +9,7 @@ import java.util.Scanner;
 /*
  * The Client that can be run both as a console or a GUI
  */
+/*
 public class Client  {
 
 	// for I/O
@@ -29,6 +30,7 @@ public class Client  {
 	 *  port: the port number
 	 *  username: the username
 	 */
+/*
 	Client(String server, int port, String username) {
 		// which calls the common constructor with the GUI set to null
 		this(server, port, username, null);
@@ -38,6 +40,7 @@ public class Client  {
 	 * Constructor call when used from a GUI
 	 * in console mode the ClienGUI parameter is null
 	 */
+/*
 	Client(String server, int port, String username, ClientGUI cg) {
 		this.server = server;
 		this.port = port;
@@ -49,6 +52,7 @@ public class Client  {
 	/*
 	 * To start the dialog
 	 */
+/*
 	public boolean start() {
 		// try to connect to the server
 		try {
@@ -64,6 +68,7 @@ public class Client  {
 		display(msg);
 	
 		/* Creating both Data Stream */
+/*
 		try
 		{
 			sInput  = new ObjectInputStream(socket.getInputStream());
@@ -94,6 +99,7 @@ public class Client  {
 	/*
 	 * To send a message to the console or the GUI
 	 */
+/*
 	private void display(String msg) {
 		if(cg == null)
 			System.out.println(msg);      // println in console mode
@@ -104,6 +110,7 @@ public class Client  {
 	/*
 	 * To send a message to the server
 	 */
+/*
 	void sendMessage(ChatMessage msg) {
 		try {
 			sOutput.writeObject(msg);
@@ -117,6 +124,7 @@ public class Client  {
 	 * When something goes wrong
 	 * Close the Input/Output streams and disconnect not much to do in the catch clause
 	 */
+/*
 	private void disconnect() {
 		try { 
 			if(sInput != null) sInput.close();
@@ -154,7 +162,7 @@ public class Client  {
 	 * In console mode, if an error occurs the program simply stops
 	 * when a GUI id used, the GUI is informed of the disconnection
 	 */
-	
+	/*
 	public static void main(String[] args) {
 		// default values
 		int portNumber = 1500;
@@ -223,6 +231,7 @@ public class Client  {
 	 * a class that waits for the message from the server and append them to the JTextArea
 	 * if we have a GUI or simply System.out.println() it in console mode
 	 */
+/*
 	class ListenFromServer extends Thread {
 
 		public void run() {
@@ -251,5 +260,5 @@ public class Client  {
 		}
 	}
 }
-
+*/
 
