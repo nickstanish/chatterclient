@@ -1,5 +1,6 @@
 import java.awt.CardLayout;
 import java.awt.Color;
+import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
@@ -55,11 +56,10 @@ public class ChatterClient extends JFrame{
 	private static final String CHAT_SCREEN = "Chat";
 	private static final String DEFAULT_HOST = "data.cs.purdue.edu";
 	private static final int DEFAULT_PORT = 1500;
-	private String defaultUsername = "username";
 	private String username;
 	private int port;
 	private String hostname;
-	private boolean showTime = true;
+	private Options options = new Options();
 
 	// for I/O
 	private ObjectInputStream sInput;		// to read from the socket
@@ -104,7 +104,7 @@ public class ChatterClient extends JFrame{
 	 * To send a message to the console or the GUI
 	 */
 	private void display(String msg) {
-		if(!showTime){
+		if(!options.showTime){
 			//fix whoisin time parse bug with a start of line regex - 9/2/12
 			msg = msg.replaceFirst("^(\\d{1,2}:\\d{1,2}:\\d{1,2}[:\\s]{1,2})", "");
 		}
@@ -168,6 +168,8 @@ public class ChatterClient extends JFrame{
 		}
 	}
 	ChatterClient(String hostname, int portnumber){
+		loadOptions();
+		Container contentPane = getContentPane();
 		mainPanel = new JPanel();
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		createMenu();
@@ -186,7 +188,7 @@ public class ChatterClient extends JFrame{
 		mainPanel.add(bottomPanel);
 		createLoginScreen();
 		createChatScreen();
-		add(mainPanel);
+		contentPane.add(mainPanel);
 	}
 
 	/**
@@ -196,12 +198,27 @@ public class ChatterClient extends JFrame{
 	 * use methods to organize everything thats going on since most of it
 	 * initializing the GUI
 	 */
-	
+	private void showOptions(){
+		// TODO: pretty much done, optimize at bottom
+		// Maybe refresh fields if any
+		OptionsPanel optionsPanel = new OptionsPanel(options);
+		int answer = JOptionPane.showConfirmDialog(this, optionsPanel, "Options", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);  
+		if (answer == JOptionPane.OK_OPTION){
+			optionsPanel.saveOptions();
+			loadOptions();
+			} 
+		
+	}
 	private void createMenu(){
 		JMenuBar menubar = new JMenuBar();
 		JMenu filemenu = new JMenu("File");
 		JMenuItem optionsMenu = new JMenuItem("Options");
 		filemenu.add(optionsMenu);
+		optionsMenu.addActionListener(new ActionListener(){
+			public void actionPerformed(ActionEvent e){
+				showOptions();
+			}
+		});
 		logoutMenu = new JMenuItem("Logout");
 		logoutMenu.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent e){
@@ -228,7 +245,7 @@ public class ChatterClient extends JFrame{
 		loginScreen = new JPanel();
 		JPanel panel = new JPanel();
 		panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-		loginBox = new JTextField(defaultUsername,20);
+		loginBox = new JTextField(options.defaultUsername,20);
 		loginBox.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent e){
 				login();
@@ -261,7 +278,6 @@ public class ChatterClient extends JFrame{
 		buttonPanel.add(advancedButton);
 		panel.add(buttonPanel);
 		advancedPanel = new JPanel(new GridLayout(0,1));
-		advancedPanel.setMaximumSize(new Dimension(200,100));
 		serverBox = new JTextField(DEFAULT_HOST);
 		portBox = new JTextField(DEFAULT_PORT + "");
 		advancedPanel.add(new JLabel("Host address"));
@@ -276,9 +292,12 @@ public class ChatterClient extends JFrame{
 		});
 		advancedPanel.add(Box.createRigidArea(new Dimension(0,10)));
 		advancedPanel.add(resetAdvancedButton);
+		advancedPanel.setMaximumSize(new Dimension(200,150));
+		advancedPanel.setPreferredSize(new Dimension(200,130));
 		panel.add(advancedPanel);
 		advancedPanel.setVisible(false);
 		panel.add(Box.createRigidArea(new Dimension(60,300)));
+		loginScreen.setPreferredSize(new Dimension(250,350));
 		loginScreen.add(panel);
 		cardsPanel.add(loginScreen, LOGIN_SCREEN);
 	}
@@ -421,11 +440,10 @@ public class ChatterClient extends JFrame{
             File file = new File("config.ini");
             FileInputStream fis = new FileInputStream(file);
     		ObjectInputStream in = new ObjectInputStream(fis);
-			showTime = (Boolean)in.readObject();
-			//defaultusername = (String)in.readObject();
+			options = (Options)in.readObject();
 			in.close();
 			fis.close();
-			
+			return;
 		}
 		catch(IOException ie){
 			System.out.println(ie + "" );
@@ -435,8 +453,8 @@ public class ChatterClient extends JFrame{
 		}
 		catch(Exception e){
 			System.out.println(e);
-			
 		}
+		options = new Options();
 	}
 }
 
@@ -473,96 +491,67 @@ class CTextArea extends JTextArea{
 	    super.paintComponent(g);
 	  }
 }
-class OptionsWindow extends JFrame implements Serializable{
-	/**
-	 * 
-	 */
-
-	private boolean showTime = true;
-	private String defaultusername = "username";
-	ButtonGroup showTimeGroup = new ButtonGroup();
-	JRadioButton showTimeOn = new JRadioButton("Yes");
-	JRadioButton showTimeOff = new JRadioButton("No");
-	JTextField defaultnameField = new JTextField(defaultusername);
+class OptionsPanel extends JPanel{
 	private static final long serialVersionUID = 2748129716144166752L;
-	JPanel mainpanel = new JPanel();
-	OptionsWindow(){
-		loadOptions();
-		showTimeOn.setSelected(showTime);
-		showTimeOff.setSelected(!showTime);
-		defaultnameField.setText(defaultusername);
-		mainpanel.setLayout(new BoxLayout(mainpanel, BoxLayout.Y_AXIS));
-		JPanel pane[] = new JPanel[10];
-		for(int x = 0; x < 10; x++){
+	public Options options;
+	public ButtonGroup showTimeGroup = new ButtonGroup();
+	public JRadioButton showTimeOn, showTimeOff;
+	public JTextField defaultNameField;
+	
+	OptionsPanel(Options opt){
+		options = opt;
+		showTimeOn = new JRadioButton("Yes" , options.showTime);
+		showTimeOff = new JRadioButton("No" , !options.showTime);
+		defaultNameField = new JTextField(15);
+		defaultNameField.setText(options.defaultUsername);
+		setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+		JPanel pane[] = new JPanel[2];
+		for(int x = 0; x < 2; x++){
 			pane[x] = new JPanel();
+			add(pane[x]);
+			pane[x].setLayout(new BoxLayout(pane[x], BoxLayout.X_AXIS));
 			pane[x].setPreferredSize(new Dimension(300,20));
-			mainpanel.add(pane[x]);
+			pane[x].setMaximumSize(new Dimension(300,20));
 		}
-
 		showTimeGroup.add(showTimeOn);
 		showTimeGroup.add(showTimeOff);
-		JLabel showTimeLabel = new JLabel("Show time of message? ");
-		JLabel setDefaultUsername = new JLabel("Set default username: ");
-		pane[0].add(new JLabel("OPTIONS"));
-		pane[1].add(showTimeLabel);
-		pane[1].add(showTimeOn);
-		pane[1].add(showTimeOff);
-		pane[2].add(setDefaultUsername);
-		pane[2].add(defaultnameField);
-		JButton save = new JButton("Save");
-		save.addActionListener(new ActionListener(){
-			public void actionPerformed(ActionEvent e){
-				saveOptions();
-			}
-		});
-		pane[8].add(save);
-		mainpanel.setPreferredSize(new Dimension(300,300));
-		setSize(300,300);
-		add(mainpanel);
-		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-		pack();
+		JLabel showTimeLabel = new JLabel("Show message time?  ");
+		JLabel setDefaultUsername = new JLabel("Set default username:  ");
+		pane[0].add(showTimeLabel);
+		pane[0].add(showTimeOn);
+		pane[0].add(showTimeOff);
+		pane[1].add(setDefaultUsername);
+		pane[1].add(defaultNameField);
+		setPreferredSize(new Dimension(300,150));
 
 	}
-	private void saveOptions(){
+	public void saveOptions(){
 		//add serializable shit here\
 		//file == config.ini
-		showTime = showTimeOn.isSelected();
-		defaultusername = defaultnameField.getText();
+		options.showTime = showTimeOn.isSelected();
+		options.defaultUsername = defaultNameField.getText().trim();
 		try{
     		FileOutputStream fos = new FileOutputStream(new File("config.ini"));
     		ObjectOutputStream out = new ObjectOutputStream(fos);
-    		out.writeObject(showTime);
-    		out.writeObject(defaultusername);
+    		out.writeObject(options);
     		out.close();
     		fos.close();
 		}
 		catch(IOException ie){
 			System.out.println("" + ie);
 		}
-		this.dispose();
 		
 	}
-	private void loadOptions(){
-		try{
-			
-            File file = new File("config.ini");
-            FileInputStream fis = new FileInputStream(file);
-    		ObjectInputStream in = new ObjectInputStream(fis);
-			showTime = (Boolean)in.readObject();
-			defaultusername = (String)in.readObject();
-			in.close();
-			fis.close();
-			
-		}
-		catch(IOException ie){
-			System.out.println(ie + "" );
-		}
-		catch(ClassNotFoundException e){
-			System.out.println(e + "" );
-		}
-		catch(Exception e){
-			System.out.println(e);
-			
-		}
+}
+class Options implements Serializable{
+	/**
+	 * options contained here
+	 */
+	private static final long serialVersionUID = 1L;
+	public String defaultUsername;
+	public boolean showTime;
+	Options(){
+		defaultUsername = "username";
+		showTime = true;
 	}
 }
