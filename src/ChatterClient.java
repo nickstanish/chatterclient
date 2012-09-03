@@ -11,14 +11,18 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.net.Socket;
 
 import javax.imageio.ImageIO;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
+import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -27,6 +31,7 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
@@ -410,7 +415,29 @@ public class ChatterClient extends JFrame{
         });
 
 	}
-
+	private void loadOptions(){
+		try{
+			
+            File file = new File("config.ini");
+            FileInputStream fis = new FileInputStream(file);
+    		ObjectInputStream in = new ObjectInputStream(fis);
+			showTime = (Boolean)in.readObject();
+			//defaultusername = (String)in.readObject();
+			in.close();
+			fis.close();
+			
+		}
+		catch(IOException ie){
+			System.out.println(ie + "" );
+		}
+		catch(ClassNotFoundException e){
+			System.out.println(e + "" );
+		}
+		catch(Exception e){
+			System.out.println(e);
+			
+		}
+	}
 }
 
 class CTextArea extends JTextArea{
@@ -445,4 +472,97 @@ class CTextArea extends JTextArea{
 	    g.fillRect(0, 0, getWidth(), getHeight());
 	    super.paintComponent(g);
 	  }
+}
+class OptionsWindow extends JFrame implements Serializable{
+	/**
+	 * 
+	 */
+
+	private boolean showTime = true;
+	private String defaultusername = "username";
+	ButtonGroup showTimeGroup = new ButtonGroup();
+	JRadioButton showTimeOn = new JRadioButton("Yes");
+	JRadioButton showTimeOff = new JRadioButton("No");
+	JTextField defaultnameField = new JTextField(defaultusername);
+	private static final long serialVersionUID = 2748129716144166752L;
+	JPanel mainpanel = new JPanel();
+	OptionsWindow(){
+		loadOptions();
+		showTimeOn.setSelected(showTime);
+		showTimeOff.setSelected(!showTime);
+		defaultnameField.setText(defaultusername);
+		mainpanel.setLayout(new BoxLayout(mainpanel, BoxLayout.Y_AXIS));
+		JPanel pane[] = new JPanel[10];
+		for(int x = 0; x < 10; x++){
+			pane[x] = new JPanel();
+			pane[x].setPreferredSize(new Dimension(300,20));
+			mainpanel.add(pane[x]);
+		}
+
+		showTimeGroup.add(showTimeOn);
+		showTimeGroup.add(showTimeOff);
+		JLabel showTimeLabel = new JLabel("Show time of message? ");
+		JLabel setDefaultUsername = new JLabel("Set default username: ");
+		pane[0].add(new JLabel("OPTIONS"));
+		pane[1].add(showTimeLabel);
+		pane[1].add(showTimeOn);
+		pane[1].add(showTimeOff);
+		pane[2].add(setDefaultUsername);
+		pane[2].add(defaultnameField);
+		JButton save = new JButton("Save");
+		save.addActionListener(new ActionListener(){
+			public void actionPerformed(ActionEvent e){
+				saveOptions();
+			}
+		});
+		pane[8].add(save);
+		mainpanel.setPreferredSize(new Dimension(300,300));
+		setSize(300,300);
+		add(mainpanel);
+		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		pack();
+
+	}
+	private void saveOptions(){
+		//add serializable shit here\
+		//file == config.ini
+		showTime = showTimeOn.isSelected();
+		defaultusername = defaultnameField.getText();
+		try{
+    		FileOutputStream fos = new FileOutputStream(new File("config.ini"));
+    		ObjectOutputStream out = new ObjectOutputStream(fos);
+    		out.writeObject(showTime);
+    		out.writeObject(defaultusername);
+    		out.close();
+    		fos.close();
+		}
+		catch(IOException ie){
+			System.out.println("" + ie);
+		}
+		this.dispose();
+		
+	}
+	private void loadOptions(){
+		try{
+			
+            File file = new File("config.ini");
+            FileInputStream fis = new FileInputStream(file);
+    		ObjectInputStream in = new ObjectInputStream(fis);
+			showTime = (Boolean)in.readObject();
+			defaultusername = (String)in.readObject();
+			in.close();
+			fis.close();
+			
+		}
+		catch(IOException ie){
+			System.out.println(ie + "" );
+		}
+		catch(ClassNotFoundException e){
+			System.out.println(e + "" );
+		}
+		catch(Exception e){
+			System.out.println(e);
+			
+		}
+	}
 }
