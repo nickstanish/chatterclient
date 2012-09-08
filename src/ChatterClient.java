@@ -3,6 +3,7 @@ import java.awt.Color;
 import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.FontFormatException;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.GridLayout;
@@ -15,6 +16,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
@@ -109,6 +111,7 @@ public class ChatterClient extends JFrame{
 			msg = msg.replaceFirst("^(\\d{1,2}:\\d{1,2}:\\d{1,2}[:\\s]{1,2})", "");
 		}
 		chatArea.append(msg + "\n");		// append to the ClientGUI JTextArea (or whatever)
+		chatArea.setCaretPosition(chatArea.getDocument().getLength());
 	}
 	
 	/*
@@ -119,7 +122,7 @@ public class ChatterClient extends JFrame{
 			sOutput.writeObject(msg);
 		}
 		catch(IOException e) {
-			display("Exception writing to server: " + e);
+			System.err.println("Exception writing to server: " + e);
 		}
 	}
 	/*
@@ -141,7 +144,7 @@ public class ChatterClient extends JFrame{
 		catch(Exception e) {} // not much else I can do
 			
 	}
-	public void connectionFailed() {
+	private void connectionFailed() {
 		JOptionPane.showMessageDialog(null, "Connection Failed");
 	}
 	/*
@@ -157,8 +160,7 @@ public class ChatterClient extends JFrame{
 					display(msg);
 				}
 				catch(IOException e) {
-					display("Server has close the connection: " + e);
-					connectionFailed();
+					System.err.println("Server has close the connection: " + e);
 					break;
 				}
 				// can't happen with a String object but need the catch anyhow
@@ -174,9 +176,25 @@ public class ChatterClient extends JFrame{
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		createMenu();
 		setMinimumSize(new Dimension(300,500));
+		//font
+		Font font1 = new Font("sansserif", Font.BOLD, 48);
+		Font font;
+		try{
+			File fontFile = new File("media/fonts/Sansation/Sansation_Regular.ttf");
+			font = Font.createFont(Font.TRUETYPE_FONT, fontFile).deriveFont(Font.ITALIC,48);
+		}
+		catch(IOException ie){
+			System.err.println(ie);
+			font = font1;
+		}
+		catch(FontFormatException ffe){
+			System.err.println(ffe);
+			font = font1;
+		}
+
 		JLabel titleLabel = new JLabel("ChatterBox");
-		titleLabel.setFont(new Font("sansserif", Font.BOLD, 48));
-		titleLabel.setForeground(new Color(75,103,161));
+		titleLabel.setFont(font);
+		titleLabel.setForeground(new Color(0x6BE400));
 		mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
 		mainPanel.setPreferredSize(new Dimension(300,500));
 		topPanel = new JPanel();
@@ -338,9 +356,7 @@ public class ChatterClient extends JFrame{
 		else{
 			port = DEFAULT_PORT;
 			hostname = DEFAULT_HOST;
-		}
-		JOptionPane.showMessageDialog(null, "Logging in as " + username + "\non " + hostname + ":" + port);
-		
+		}		
 		if(!start()){
 			disconnect();
 			connectionFailed();
@@ -415,6 +431,7 @@ public class ChatterClient extends JFrame{
 	}
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
+		/*
 		try {
             //UIManager.setLookAndFeel("com.sun.java.swing.plaf.windows.WindowsLookAndFeel");
             UIManager.setLookAndFeel("javax.swing.plaf.metal.MetalLookAndFeel");
@@ -427,6 +444,23 @@ public class ChatterClient extends JFrame{
         } catch (ClassNotFoundException ex) {
             ex.printStackTrace();
         }
+        */
+		 try {
+	            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
+	                if ("Nimbus".equals(info.getName())) {
+	                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
+	                    break;
+	                }
+	            }
+	        } catch (ClassNotFoundException ex) {
+	            java.util.logging.Logger.getLogger(ChatterClient.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+	        } catch (InstantiationException ex) {
+	            java.util.logging.Logger.getLogger(ChatterClient.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+	        } catch (IllegalAccessException ex) {
+	            java.util.logging.Logger.getLogger(ChatterClient.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+	        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
+	            java.util.logging.Logger.getLogger(ChatterClient.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+	        }
 		javax.swing.SwingUtilities.invokeLater(new Runnable() {
             public void run() {
                 createAndShowGUI();
