@@ -386,8 +386,7 @@ public class ChatterClient extends JFrame{
 		scrollingChatPanel.setPreferredSize(new Dimension(300,200));
 		messageBox = new JTextField("");
 		messageBox.setMinimumSize(new Dimension(100,20));
-		messageBox.setPreferredSize(new Dimension(200,20));
-		messageBox.setMaximumSize(new Dimension(500,20));
+		messageBox.setPreferredSize(new Dimension(200,30));
 		messageBox.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent e){
 				sendMessage();
