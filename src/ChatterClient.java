@@ -337,7 +337,14 @@ public class ChatterClient extends JFrame{
 	}
 	private void sendMessage(){
 		if(!messageBox.getText().trim().equals("")){
-			sendMessage(new ChatMessage(ChatMessage.MESSAGE, messageBox.getText()));				
+			String s = messageBox.getText().trim();
+			if(s.equalsIgnoreCase("whoisin")){
+				sendMessage(new ChatMessage(ChatMessage.WHOISIN, ""));	
+			}
+			else{
+				sendMessage(new ChatMessage(ChatMessage.MESSAGE, s));		
+			}
+					
 			messageBox.setText("");
 		}
 		
