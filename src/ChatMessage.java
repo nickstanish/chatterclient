@@ -14,14 +14,20 @@ public class ChatMessage implements Serializable {
 	// WHOISIN to receive the list of the users connected
 	// MESSAGE an ordinary message
 	// LOGOUT to disconnect from the Server
-	static final int WHOISIN = 0, MESSAGE = 1, LOGOUT = 2;
+	static final int WHOISIN = 0, MESSAGE = 1, LOGOUT = 2, TYPING = 3;
 	private int type;
 	private String message;
+	private boolean isTyping;
+	private String username;
 	
 	// constructor
 	ChatMessage(int type, String message) {
 		this.type = type;
 		this.message = message;
+	}
+	ChatMessage(int type, boolean isTyping) {
+		this.type = type;
+		this.isTyping = isTyping;
 	}
 	
 	// getters
@@ -30,6 +36,15 @@ public class ChatMessage implements Serializable {
 	}
 	String getMessage() {
 		return message;
+	}
+	boolean getTyping() {
+		return isTyping;
+	}
+	String getUsername(){
+		return this.username;
+	}
+	public void setUsername(String username){
+		this.username = username;
 	}
 }
 
