@@ -91,10 +91,11 @@ class ChatterClient extends JFrame{
 			tray = SystemTray.getSystemTray();
 			BufferedImage image;
 			try{
-				BufferedImage original = ImageIO.read(new File("media/icons/message_box_icon.png"));
-				image = new BufferedImage(15, 15, BufferedImage.TYPE_INT_ARGB);
+				//message_box_icon
+				BufferedImage original = ImageIO.read(new File("media/icons/logo.png"));
+				image = new BufferedImage(20, 20, BufferedImage.TYPE_INT_ARGB);
 				Graphics2D g = image.createGraphics();
-				g.drawImage(original, 0, 0, 15, 15, null);
+				g.drawImage(original, 0, 0, 20, 20, null);
 				g.dispose();
 				g.setComposite(AlphaComposite.Src);
 				g.setRenderingHint(RenderingHints.KEY_INTERPOLATION,RenderingHints.VALUE_INTERPOLATION_BILINEAR);
@@ -253,7 +254,7 @@ class ChatterClient extends JFrame{
 		chatArea.append(msg + "\n");		// append to the ClientGUI JTextArea (or whatever)
 		chatArea.setCaretPosition(chatArea.getDocument().getLength());
 		//notifications
-		if(SystemTray.isSupported() && this.getState() == JFrame.ICONIFIED ){
+		if(SystemTray.isSupported() && (this.getState() == JFrame.ICONIFIED || !this.isVisible())){
 			trayIcon.displayMessage("New ChatterBox Message", "Yeah you got a message...", TrayIcon.MessageType.NONE);
 		}
 		
