@@ -20,6 +20,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -73,6 +75,7 @@ class ChatterClient extends JFrame{
 	private String hostname;
 	private Options options = new Options();
 	private boolean isTyping = false;
+	private boolean focused; //used to check if window has focus
 
 	// for I/O
 	private ObjectInputStream sInput;		// to read from the socket
@@ -197,6 +200,17 @@ class ChatterClient extends JFrame{
 		createChatScreen();
 		contentPane.add(mainPanel);
 		loginBox.requestFocusInWindow();
+		addWindowFocusListener(new WindowAdapter(){
+			public void windowLostFocus(WindowEvent e){
+				changeFocus(false);
+			}
+			public void windowGainedFocus(WindowEvent e){
+				changeFocus(true);
+			}
+		});
+	}
+	private void changeFocus(boolean x){
+		focused = x;
 	}
 	private void bringToFront(){
 		this.setVisible(true);
@@ -253,8 +267,10 @@ class ChatterClient extends JFrame{
 		}
 		chatArea.append(msg + "\n");		// append to the ClientGUI JTextArea (or whatever)
 		chatArea.setCaretPosition(chatArea.getDocument().getLength());
-		//notifications
-		if(SystemTray.isSupported() && (this.getState() == JFrame.ICONIFIED || !this.isVisible())){
+		/*
+		 * seems like the best way to implement notifications for now
+		 */
+		if(SystemTray.isSupported() && (this.getState() == JFrame.ICONIFIED || !this.isVisible() || !focused)){
 			trayIcon.displayMessage("New ChatterBox Message", "Yeah you got a message...", TrayIcon.MessageType.NONE);
 		}
 		
