@@ -49,6 +49,7 @@ import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.JWindow;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.event.DocumentEvent;
@@ -86,10 +87,30 @@ class ChatterClient extends JFrame{
 	private TrayIcon trayIcon;
 	private PopupMenu trayMenu;
 	private MenuItem logoutTrayItem, exitTrayItem;
-
+	//notifications
+	MouseListener notificationListener;
+	JWindow notificationWindow;
 		//constructor
 	ChatterClient(String hostname, int portnumber){
+
 		loadOptions();
+		notificationWindow = new JWindow();
+		notificationListener = new MouseListener(){
+			@Override
+			public void mouseClicked(MouseEvent arg0) {}
+			@Override
+			public void mouseEntered(MouseEvent arg0) {}
+			@Override
+			public void mouseExited(MouseEvent arg0) {}
+			@Override
+			public void mousePressed(MouseEvent arg0) {
+				//open client window
+				notificationClicked();
+			}
+			@Override
+			public void mouseReleased(MouseEvent arg0) {}
+		};
+		notificationWindow.addMouseListener(notificationListener);
 		if(SystemTray.isSupported()){
 			tray = SystemTray.getSystemTray();
 			BufferedImage image;
@@ -209,6 +230,10 @@ class ChatterClient extends JFrame{
 			}
 		});
 	}
+	private void notificationClicked(){
+		notificationWindow.setVisible(false);
+		bringToFront();
+	}
 	private void changeFocus(boolean x){
 		focused = x;
 	}
@@ -270,8 +295,12 @@ class ChatterClient extends JFrame{
 		/*
 		 * seems like the best way to implement notifications for now
 		 */
-		if(SystemTray.isSupported() && (this.getState() == JFrame.ICONIFIED || !this.isVisible() || !focused)){
-			trayIcon.displayMessage("New ChatterBox Message", "Yeah you got a message...", TrayIcon.MessageType.NONE);
+		//SystemTray.isSupported() for tray
+		if(this.getState() == JFrame.ICONIFIED || !this.isVisible() || !focused){
+			//trayIcon.displayMessage("New ChatterBox Message", "Yeah you got a message...", TrayIcon.MessageType.NONE);
+			notificationWindow = new JWindow();
+			notificationWindow.addMouseListener(notificationListener);
+			new Notification(notificationWindow, "ChatterBox:", "New Message", 3000);
 		}
 		
 
@@ -511,6 +540,7 @@ class ChatterClient extends JFrame{
 		}
 		switchView(1);
 		loggedIn = true;
+		setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
 		logoutMenu.setEnabled(true);
 		messageBox.requestFocusInWindow();
 	}
@@ -521,6 +551,7 @@ class ChatterClient extends JFrame{
 		logoutMenu.setEnabled(false);
 		loggedIn = false;
 		loginBox.requestFocusInWindow();
+		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 	}
 	private void createChatScreen(){
 		chatScreen = new JPanel();
@@ -581,7 +612,7 @@ class ChatterClient extends JFrame{
         // Create and set up the window.
 		// Avoid statics within game
         ChatterClient window = new ChatterClient("data.cs.purdue.edu", 1500);
-        window.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+        window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         window.setTitle("ChatterBox");
         window.setSize(new Dimension(500,600));
         // TODO auto-save before exiting
