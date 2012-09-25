@@ -1,5 +1,3 @@
-import static java.awt.GraphicsDevice.WindowTranslucency.TRANSLUCENT;
-
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.GraphicsDevice;
@@ -40,9 +38,10 @@ public class Notification extends Thread{
 		window.getContentPane().setBackground(new Color(227, 227, 227));	
 		GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
 		GraphicsDevice gd = ge.getDefaultScreenDevice();
-		if (gd.isWindowTranslucencySupported(TRANSLUCENT)){
+		/*if (gd.isWindowTranslucencySupported(TRANSLUCENT)){
 			window.setOpacity(0.75f);
 		}
+		*/
 		dim = ge.getMaximumWindowBounds();
 		desiredLocation = new Data((int)dim.getWidth() - windowSize.x - 2, (int)dim.getHeight() - windowSize.y - 2);
 		currentLocation = new Data((int)dim.getWidth(), (int)dim.getHeight() - windowSize.y - 2);
