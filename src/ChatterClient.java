@@ -612,7 +612,6 @@ class ChatterClient extends JFrame{
         // Create and set up the window.
 		// Avoid statics within game
         ChatterClient window = new ChatterClient("data.cs.purdue.edu", 1500);
-        window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         window.setTitle("ChatterBox");
         window.setSize(new Dimension(500,600));
         // TODO auto-save before exiting
