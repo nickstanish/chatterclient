@@ -3,70 +3,104 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
+/**
+ * 
+ * Used to manage DataBase
+ * 1. create instance
+ * 2. connect();
+ * 3. do your biz
+ * 4. close();
+ * 
+ * Restricted user for SELECT
+ * nstanish_user
+ * xiySbU1[qk~n
+ *
+ */
 
 public class DBConnect {
-
-	public DBConnect() {
-		// TODO Auto-generated constructor stub
-		Connection conn = null;
-		System.out.println(md5("encrypt password before storing"));
-
-        try
-        {
-        	//standard user
-            String userName = "nstanish_user";
-            String password = "xiySbU1[qk~n";
-            //all access user
-            userName = "nstanish_kagui";
-            password = "xFcMC8V9MQT7";
-            String url = "jdbc:mysql://javafilter.heliohost.org:3306/" + "nstanish_chatterbox";
+	private String username, password;
+	private Connection c;
+	public static final int ADMIN = 0;
+	public static final int NORMAL = 1;
+	public DBConnect(String username, String password) {
+		c = null;
+		this.username = username;
+		this.password = password;
+	}
+	public boolean connect(){
+		try {
+            String url = "jdbc:mysql://javafilter.heliohost.org:3306/" + "nstanish_chatterbox" + "?useUnicode=true&characterEncoding=utf8";
             Class.forName ("com.mysql.jdbc.Driver").newInstance ();
-            conn = DriverManager.getConnection (url, userName, password);
-            System.out.println ("Database connection established");
-            try{
-            	  Statement st = conn.createStatement();
-            	  String username = "my chosen username";
-            	  String pass = md5("password");
-            	  String name = "my whole name";
-            	  String email = "myemail@mydomain.com";
-            	  int admin = 0;
-            	  int val = st.executeUpdate("INSERT INTO auth (username, password, name, email, admin) VALUES ('"+ username +"','"+ pass +"','" + name + "','" + email + "','" + admin +"')");
-            	  System.out.println("1 row affected");
-            	  }
-            	  catch (SQLException s){
-            	  System.out.println("SQL statement is not executed!");
-            	  }
+            c = DriverManager.getConnection (url, username, password);
+            return true;
         }
-        catch (Exception e)
-        {
+        catch (Exception e){
             System.err.println ("Cannot connect to database server" + e);
+            return false;
         }
-        finally
+	}
+	public boolean close(){
+		if (c != null)
         {
-            if (conn != null)
+            try
             {
-                try
-                {
-                    conn.close ();
-                    System.out.println ("Database connection terminated");
-                }
-                catch (Exception e) { /* ignore close errors */ 
-                	
-                }
+                c.close ();
+                System.out.println ("Database connection terminated");
+                return true;
+            }
+            catch (Exception e) { /* ignore close errors */ 
+            	System.err.println("unable to close");
+            	return false; //still connected
             }
         }
+		return true;
 	}
-
-	/**
-	 * @param args
-	 */
-	public static void main(String[] args) {
-		// TODO Auto-generated method stub
-		new DBConnect();
+	
+	public boolean createUser(String user, String pass, String name, String email, int type){
+		try{
+			pass = md5(pass);
+			Statement st = c.createStatement();
+      	  	String sql = "INSERT INTO auth (username, password, name, email, admin) VALUES ('"+ user +"','"+ pass +"','" + name + "','" + email + "','" + type +"')";
+      	  	int returnValue = st.executeUpdate(sql);
+      	  	return true;
+		}
+		catch (SQLException s){
+			System.err.println("Unable to update:\n " + s);
+			return false;
+		}
+  }
+	public boolean createUser(String user, String pass, String name, String email){
+		return createUser(user,pass,name,email,NORMAL);
 	}
+	public boolean selectUser(String username){
+		//`username`, `password`, `name`, `email`, `admin`, 
+		String sql;
+		try {
+			sql = "SELECT * FROM auth WHERE 'username' = '" + new String(username.getBytes(), "UTF-8") + "'";
+			ResultSet rs = c.createStatement().executeQuery(sql);
+			while(rs.next()){
+				//int id  = rs.getInt("id");
+				//System.out.println("id =" + id);
+				String pass = rs.getString("password");
+				System.out.println(pass);
+			}
+			
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return false;
+		}
+		catch (UnsupportedEncodingException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		return true;
+	}
+	
 	public static String hex(byte[] array) {
 		  StringBuffer sb = new StringBuffer();
 		  for (int i = 0; i < array.length; ++i) {
@@ -75,13 +109,31 @@ public class DBConnect {
 		  return sb.toString();
 		}
 		 
-		 
-		public static String md5(String message) { 
+	public static String md5(String message) { 
 		  try { 
 		    MessageDigest md = MessageDigest.getInstance("MD5"); 
 		    return hex (md.digest(message.getBytes("CP1252"))); 
 		  } catch (NoSuchAlgorithmException e) { } catch (UnsupportedEncodingException e) { } 
 		  return null;
+	}
+	public static void main(String[] args) {
+		DBConnect db = new DBConnect("nstanish_kagui", "xFcMC8V9MQT7");
+		if (db.connect()){
+			//create standard user
+			/*
+			if(!db.createUser("username", "password", "name", "email")){
+				System.err.println("unable to create user");
+			}
+			//create admin user
+			if(!db.createUser("","","","",ADMIN)){
+				System.err.println("unable to create user");
+			}
+			*/
+			db.selectUser("nick");
 		}
+		else System.err.println("unable to connect");
+		db.close();
+	}
+	
 
 }
