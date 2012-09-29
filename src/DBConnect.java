@@ -26,6 +26,7 @@ public class DBConnect {
 	private Connection c;
 	public static final int ADMIN = 0;
 	public static final int NORMAL = 1;
+	public static final int ENCRYPTED = -1;
 	public DBConnect(String username, String password) {
 		c = null;
 		this.username = username;
@@ -76,33 +77,50 @@ public class DBConnect {
 	public boolean createUser(String user, String pass, String name, String email){
 		return createUser(user,pass,name,email,NORMAL);
 	}
-	public boolean selectUser(String username, String password){
+	public boolean login(String username, String password){
+		return login(username, password, 0);
+	}
+	public boolean login(String username, String password, int encryption){
+		ResultSet rs = selectUser(username);
+		String pass;
+		try {
+			rs.first();
+			pass = rs.getString("password");
+			if(encryption != ENCRYPTED){
+				password = md5(password);
+			}
+			if(password.equals(pass)){
+				return true;
+			}
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+
+		return false;
+	}
+	public ResultSet selectUser(String username){
 		//`username`, `password`, `name`, `email`, `admin`, 
 		String sql;
 		try {
 			sql = "SELECT * FROM auth WHERE username='" + username+"'";
 			ResultSet rs = c.createStatement().executeQuery(sql);
+			return rs;
+			/*
 			while(rs.next()){
 				int id  = rs.getInt("id");
 				System.out.println("id =" + id);
-				String pass = rs.getString("password");
-				System.out.println(pass);
-				System.out.println(md5(password));
-				if(md5(password).equals(pass)){
-					System.out.println("Username password combo correct");
-				}
-				else{
-					System.out.println("Username password combo incorrect");
-				}
+				
 			}
+			return rs;
+			*/
 			
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-			return false;
+			return null;
 		}
-		
-		return true;
 	}
 	
 	public static String hex(byte[] array) {
@@ -137,8 +155,15 @@ public class DBConnect {
 				System.err.println("unable to create user");
 			}
 			*/
-			String password = "PASSWORD";
-			db.selectUser("username", password);
+			String username = "username";
+			String password = "passord";
+			if(db.login(username, md5(password), DBConnect.ENCRYPTED)){
+				System.out.println("login successful");
+			}
+			else{
+				System.out.println("forgot your password?");
+			}
+				
 			
 		}
 		else System.err.println("unable to connect");
