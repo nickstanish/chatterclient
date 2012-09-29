@@ -33,7 +33,7 @@ public class DBConnect {
 	}
 	public boolean connect(){
 		try {
-            String url = "jdbc:mysql://javafilter.heliohost.org:3306/" + "nstanish_chatterbox" + "?useUnicode=true&characterEncoding=utf8";
+            String url = "jdbc:mysql://javafilter.heliohost.org:3306/" + "nstanish_chatterbox" + "?useUnicode=true&characterEncoding=utf8&collation=UCS_BASIC ";
             Class.forName ("com.mysql.jdbc.Driver").newInstance ();
             c = DriverManager.getConnection (url, username, password);
             return true;
@@ -76,17 +76,24 @@ public class DBConnect {
 	public boolean createUser(String user, String pass, String name, String email){
 		return createUser(user,pass,name,email,NORMAL);
 	}
-	public boolean selectUser(String username){
+	public boolean selectUser(String username, String password){
 		//`username`, `password`, `name`, `email`, `admin`, 
 		String sql;
 		try {
-			sql = "SELECT * FROM auth WHERE 'username' = '" + new String(username.getBytes(), "UTF-8") + "'";
+			sql = "SELECT * FROM auth WHERE username='" + username+"'";
 			ResultSet rs = c.createStatement().executeQuery(sql);
 			while(rs.next()){
-				//int id  = rs.getInt("id");
-				//System.out.println("id =" + id);
+				int id  = rs.getInt("id");
+				System.out.println("id =" + id);
 				String pass = rs.getString("password");
 				System.out.println(pass);
+				System.out.println(md5(password));
+				if(md5(password).equals(pass)){
+					System.out.println("Username password combo correct");
+				}
+				else{
+					System.out.println("Username password combo incorrect");
+				}
 			}
 			
 		} catch (SQLException e) {
@@ -94,10 +101,7 @@ public class DBConnect {
 			e.printStackTrace();
 			return false;
 		}
-		catch (UnsupportedEncodingException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
+		
 		return true;
 	}
 	
@@ -124,12 +128,18 @@ public class DBConnect {
 			if(!db.createUser("username", "password", "name", "email")){
 				System.err.println("unable to create user");
 			}
+			else{
+				
+			}
+			/*
 			//create admin user
 			if(!db.createUser("","","","",ADMIN)){
 				System.err.println("unable to create user");
 			}
 			*/
-			db.selectUser("nick");
+			String password = "PASSWORD";
+			db.selectUser("username", password);
+			
 		}
 		else System.err.println("unable to connect");
 		db.close();
