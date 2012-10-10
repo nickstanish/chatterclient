@@ -88,13 +88,14 @@ class ChatterClient extends JFrame{
 	private PopupMenu trayMenu;
 	private MenuItem logoutTrayItem, exitTrayItem;
 	//notifications
-	MouseListener notificationListener;
-	JWindow notificationWindow;
+	private MouseListener notificationListener;
+	private NotificationWindow notificationWindow;
+	private NotificationQueue queue;
+
 		//constructor
 	ChatterClient(String hostname, int portnumber){
 
 		loadOptions();
-		notificationWindow = new JWindow();
 		notificationListener = new MouseListener(){
 			@Override
 			public void mouseClicked(MouseEvent arg0) {}
@@ -110,7 +111,9 @@ class ChatterClient extends JFrame{
 			@Override
 			public void mouseReleased(MouseEvent arg0) {}
 		};
+		notificationWindow = new NotificationWindow();
 		notificationWindow.addMouseListener(notificationListener);
+		queue = new NotificationQueue(notificationWindow, NotificationQueue.SHOW_ONE_FOR_ALL);
 		if(SystemTray.isSupported()){
 			tray = SystemTray.getSystemTray();
 			BufferedImage image;
@@ -221,6 +224,7 @@ class ChatterClient extends JFrame{
 		createChatScreen();
 		contentPane.add(mainPanel);
 		loginBox.requestFocusInWindow();
+		
 		addWindowFocusListener(new WindowAdapter(){
 			public void windowLostFocus(WindowEvent e){
 				changeFocus(false);
@@ -232,6 +236,7 @@ class ChatterClient extends JFrame{
 	}
 	private void notificationClicked(){
 		notificationWindow.setVisible(false);
+		queue.clear();
 		bringToFront();
 	}
 	private void changeFocus(boolean x){
@@ -298,9 +303,8 @@ class ChatterClient extends JFrame{
 		//SystemTray.isSupported() for tray
 		if(this.getState() == JFrame.ICONIFIED || !this.isVisible() || !focused){
 			//trayIcon.displayMessage("New ChatterBox Message", "Yeah you got a message...", TrayIcon.MessageType.NONE);
-			notificationWindow = new JWindow();
-			notificationWindow.addMouseListener(notificationListener);
-			new Notification(notificationWindow, "ChatterBox:", "New Message", 3000);
+			queue.add(new Note("ChatterBox: ", "New Message"));
+			System.out.println("should have gotten a notification around now");
 		}
 		
 
@@ -398,36 +402,9 @@ class ChatterClient extends JFrame{
 		JMenu usermenu = new JMenu("Users");
 		JMenu filemenu = new JMenu("File");
 		
-
-		JMenuItem userlist = new JMenuItem("UserList");
-		
-		
 		JMenuItem optionsMenu = new JMenuItem("Options");
 		filemenu.add(optionsMenu);
-		
-		userlist.addActionListener(new ActionListener(){
-			public void actionPerformed(ActionEvent e){
-		
-				//addition of the user panel *no window popping up yet, my bad dawg 
-		
-		JPanel userpane = new JPanel();
-		
-			userpane = new JPanel();
 			
-			userpane.setLayout(new BoxLayout(userpane, BoxLayout.X_AXIS));
-			userpane.setPreferredSize(new Dimension(300,20));
-			userpane.setMaximumSize(new Dimension(300,20));
-			userpane.setVisible(true);
-			userpane.setSize(new Dimension(500,600));
-	        // TODO auto-save before exiting
-			add(userpane);
-			userpane.setVisible(true);
-		
-		setPreferredSize(new Dimension(300,150));
-		
-			}
-		});
-		
 		optionsMenu.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent e){
 				showOptions();
@@ -447,7 +424,6 @@ class ChatterClient extends JFrame{
 				exit();
 			}
 		});
-		usermenu.add(userlist);
 		filemenu.add(exitMenu);
 		menubar.add(filemenu);
 		menubar.add(usermenu);
@@ -773,8 +749,6 @@ class OptionsPanel extends JPanel{
 		showTimeOff = new JRadioButton("No" , !options.showTime);
 		defaultNameField = new JTextField(15);
 		defaultNameField.setText(options.defaultUsername);
-		passwordField = new JTextField(15);
-		passwordField.setText(options.defaultPassword);
 		setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 		JPanel pane[] = new JPanel[4];
 		for(int x = 0; x < 4; x++){
@@ -788,15 +762,12 @@ class OptionsPanel extends JPanel{
 		showTimeGroup.add(showTimeOff);
 		JLabel showTimeLabel = new JLabel("Show message time?  ");
 		JLabel setDefaultUsername = new JLabel("Username:  ");
-		JLabel setPassword = new JLabel("Password:   ");
 		pane[0].add(showTimeLabel);
 		pane[0].add(showTimeOn);
 		pane[0].add(showTimeOff);
 		pane[1].add(setDefaultUsername);
 		pane[1].add(defaultNameField);
-		pane[2].add(setPassword);
 		//add "*"'s for the characters in the password box for legitimacy mainly cuz its badass
-		pane[2].add(passwordField);
 		//add remember "Login Button" --radio buttons
 		setPreferredSize(new Dimension(300,150));
 
@@ -806,7 +777,6 @@ class OptionsPanel extends JPanel{
 		//file == config.ini
 		options.showTime = showTimeOn.isSelected();
 		options.defaultUsername = defaultNameField.getText().trim();
-		options.defaultPassword = passwordField.getText().trim();
 		try{
     		FileOutputStream fos = new FileOutputStream(new File("config.ini"));
     		ObjectOutputStream out = new ObjectOutputStream(fos);
@@ -822,15 +792,13 @@ class OptionsPanel extends JPanel{
 }
 class Options implements Serializable{
 	/**
-	 * options contained here
+	 * options contained in here
 	 */
 	private static final long serialVersionUID = 1L;
 	public String defaultUsername;
-	public String defaultPassword;
 	public boolean showTime;
 	Options(){
 		defaultUsername = "username";
-		defaultPassword = "KickAssGUI";
 		showTime = true;
 	}
 }
