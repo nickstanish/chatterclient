@@ -304,7 +304,7 @@ class ChatterClient extends JFrame{
 		if(this.getState() == JFrame.ICONIFIED || !this.isVisible() || !focused){
 			//trayIcon.displayMessage("New ChatterBox Message", "Yeah you got a message...", TrayIcon.MessageType.NONE);
 			queue.add(new Note("ChatterBox: ", "New Message"));
-			System.out.println("should have gotten a notification around now");
+			//System.out.println("should have gotten a notification around now");
 		}
 		
 
@@ -642,7 +642,7 @@ class ChatterClient extends JFrame{
 		// TODO Auto-generated method stub
 
 		try {
-            UIManager.setLookAndFeel("javax.swing.plaf.metal.MetalLookAndFeel");
+			UIManager.setLookAndFeel("javax.swing.plaf.metal.MetalLookAndFeel");
         } catch (UnsupportedLookAndFeelException ex) {
             ex.printStackTrace();
         } catch (IllegalAccessException ex) {

@@ -52,10 +52,18 @@ public class NotificationQueue extends Thread{
 						}
 						
 						if(!list.isEmpty()) list.remove(0);
+						
 					}
 				}
 			}
 			
+			try {
+				// required to make the thread sleep/wait so that other threads can access list.
+				Thread.sleep(300);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 	}
 	public synchronized void clear(){
