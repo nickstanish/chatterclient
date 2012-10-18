@@ -38,6 +38,7 @@ import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenu;
@@ -45,13 +46,14 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JPasswordField;
 import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
-import javax.swing.JWindow;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
+import javax.swing.border.EmptyBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 class ChatterClient extends JFrame{
@@ -61,6 +63,7 @@ class ChatterClient extends JFrame{
 	private static final long serialVersionUID = -7269347532987537692L;
 	private JPanel mainPanel, topPanel, bottomPanel,cardsPanel, loginScreen, chatScreen, advancedPanel;
 	private JTextField loginBox, messageBox, serverBox, portBox;
+	private JPasswordField passwordBox;
 	private File file;
 	private JLabel isTypingLabel;
 	private JButton loginButton, advancedButton, sendButton, resetAdvancedButton;
@@ -399,7 +402,6 @@ class ChatterClient extends JFrame{
 	}
 	private void createMenu(){
 		JMenuBar menubar = new JMenuBar();
-		JMenu usermenu = new JMenu("Users");
 		JMenu filemenu = new JMenu("File");
 		
 		JMenuItem optionsMenu = new JMenuItem("Options");
@@ -426,7 +428,6 @@ class ChatterClient extends JFrame{
 		});
 		filemenu.add(exitMenu);
 		menubar.add(filemenu);
-		menubar.add(usermenu);
 		setJMenuBar(menubar);
 	}
 	private void exit(){
@@ -439,8 +440,11 @@ class ChatterClient extends JFrame{
 	private void createLoginScreen(){
 		loginScreen = new JPanel();
 		JPanel panel = new JPanel();
+		
 		panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 		loginBox = new JTextField(options.defaultUsername,20);
+		passwordBox = new JPasswordField("titties", 20); //PasswordField
+
 		loginBox.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent e){
 				login();
@@ -461,17 +465,44 @@ class ChatterClient extends JFrame{
 		JPanel labelPanel = new JPanel();
 		labelPanel.add(new JLabel("Login to start chatting"));
 		panel.add(labelPanel);
-		panel.add(Box.createRigidArea(new Dimension(0,20)));
+		panel.add(Box.createRigidArea(new Dimension(0,50)));
 		JPanel usernamePanel = new JPanel(new GridLayout(0,1));
 		usernamePanel.setMaximumSize(new Dimension(200,100));
-		usernamePanel.add(new JLabel("Username:"));
+		//usernamePanel.add(new JLabel("Username:"));
 		usernamePanel.add(loginBox);
+		usernamePanel.add(Box.createRigidArea(new Dimension(0,3)));
+		usernamePanel.add(passwordBox);
 		panel.add(usernamePanel);
-		panel.add(Box.createRigidArea(new Dimension(0,20)));
-		JPanel buttonPanel = new JPanel();
+		panel.add(Box.createRigidArea(new Dimension(0,10)));
+		
+		//Adding of the Checkbox Panel
+		JPanel checkboxPanel = new JPanel(new GridLayout(0,1));
+		checkboxPanel.setBorder(new EmptyBorder(5, 10, 5, 0) );
+		JCheckBox rememPass = new JCheckBox("remember password");
+		JCheckBox autoLog = new JCheckBox("login automatically");
+		
+		checkboxPanel.add(rememPass);
+		checkboxPanel.add(autoLog);
+		panel.add(checkboxPanel);
+		panel.add(Box.createRigidArea(new Dimension(0,10)));
+		
+		//JPanel buttonPanel = new JPanel();
+		JPanel buttonPanel = new JPanel(new GridLayout(0,1));
 		buttonPanel.add(loginButton);
+		buttonPanel.add(Box.createRigidArea(new Dimension(0,5)));
 		buttonPanel.add(advancedButton);
+		advancedButton.setVisible(false);
 		panel.add(buttonPanel);
+		
+		autoLog.addActionListener(new ActionListener(){
+			public void actionPerformed(ActionEvent e){
+				if(loginBox.getText().equals("advanced"))
+					advancedButton.setVisible(true);
+				else
+					advancedButton.setVisible(false);
+			}
+		});
+		
 		advancedPanel = new JPanel(new GridLayout(0,1));
 		serverBox = new JTextField(DEFAULT_HOST);
 		portBox = new JTextField(DEFAULT_PORT + "");
