@@ -1,11 +1,15 @@
 
 import java.io.UnsupportedEncodingException;
-import java.security.GeneralSecurityException;
+import java.security.spec.AlgorithmParameterSpec;
+import java.security.spec.KeySpec;
 
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.PBEKeySpec;
+import javax.crypto.spec.PBEParameterSpec;
  
 /**
  *  
@@ -13,8 +17,16 @@ import javax.crypto.SecretKey;
  */
 public class ToolKit {
 
-	    public static Cipher ecipher;
-	    public static Cipher dcipher;
+	    public Cipher ecipher;
+	    public Cipher dcipher;
+	    // 8-byte Salt
+	    byte[] salt = {
+	        (byte)0xA9, (byte)0x9B, (byte)0xC8, (byte)0x32,
+	        (byte)0x56, (byte)0x35, (byte)0xE3, (byte)0x03
+	    };
+
+	    // Iteration count
+	    int iterationCount = 19;
 
 	    ToolKit(SecretKey key) {
 	        try {
@@ -28,8 +40,29 @@ public class ToolKit {
 	        } catch (java.security.InvalidKeyException e) {
 	        }
 	    }
+	    ToolKit(String passPhrase) {
+	        try {
+	            // Create the key
+	            KeySpec keySpec = new PBEKeySpec(passPhrase.toCharArray(), salt, iterationCount);
+	            SecretKey key = SecretKeyFactory.getInstance(
+	                "PBEWithMD5AndDES").generateSecret(keySpec);
+	            ecipher = Cipher.getInstance(key.getAlgorithm());
+	            dcipher = Cipher.getInstance(key.getAlgorithm());
 
-	   static public String encrypt(String str) {
+	            // Prepare the parameter to the ciphers
+	            AlgorithmParameterSpec paramSpec = new PBEParameterSpec(salt, iterationCount);
+
+	            // Create the ciphers
+	            ecipher.init(Cipher.ENCRYPT_MODE, key, paramSpec);
+	            dcipher.init(Cipher.DECRYPT_MODE, key, paramSpec);
+	        } catch (java.security.InvalidAlgorithmParameterException e) {
+	        } catch (java.security.spec.InvalidKeySpecException e) {
+	        } catch (javax.crypto.NoSuchPaddingException e) {
+	        } catch (java.security.NoSuchAlgorithmException e) {
+	        } catch (java.security.InvalidKeyException e) {
+	        }
+	    }
+	   public String encrypt(String str) {
 	        try {
 	            // Encode the string into bytes using utf-8
 	            byte[] utf8 = str.getBytes("UTF8");
@@ -47,7 +80,7 @@ public class ToolKit {
 	        return null;
 	    }
 
-	   static public String decrypt(String str) {
+	   public String decrypt(String str) {
 	        try {
 	            // Decode base64 to get bytes
 	            byte[] dec = new sun.misc.BASE64Decoder().decodeBuffer(str);
@@ -74,24 +107,18 @@ public class ToolKit {
     	    SecretKey key = KeyGenerator.getInstance("DES").generateKey();
 
     	    // Create encrypter/decrypter class
-    	    ToolKit encrypter = new ToolKit(key);
+    	    ToolKit encrypter = new ToolKit("fuck you");
+    	    
 
     	    // Encrypt
     	    String encrypted = encrypter.encrypt("Don't tell anybody!");
+    	    System.out.println(encrypted);
 
     	    // Decrypt
     	    String decrypted = encrypter.decrypt(encrypted);
+    	    System.out.println(decrypted);
     	} catch (Exception e) {
     	}
-    	
-    	String s = "";
-    	
-			System.out.print(ToolKit.encrypt(s));
-		
-			
-			if(s.equals(ToolKit.decrypt(ToolKit.encrypt(s)))){
-			System.out.println("fucking vodka");
-			}
 		
 		
  
