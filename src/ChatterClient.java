@@ -500,6 +500,7 @@ class ChatterClient extends JFrame{
 					advancedButton.setVisible(true);
 				else
 					advancedButton.setVisible(false);
+					advancedPanel.setVisible(false);
 			}
 		});
 		
