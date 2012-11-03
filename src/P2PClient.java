@@ -1,61 +1,11 @@
-import java.awt.AWTException;
-import java.awt.AlphaComposite;
-import java.awt.CardLayout;
-import java.awt.Color;
-import java.awt.Container;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.FontFormatException;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.GridLayout;
-import java.awt.MenuItem;
-import java.awt.PopupMenu;
-import java.awt.Rectangle;
-import java.awt.RenderingHints;
-import java.awt.SystemTray;
-import java.awt.TexturePaint;
-import java.awt.TrayIcon;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-import java.awt.geom.Rectangle2D;
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.Serializable;
 import java.net.Socket;
+import java.util.Scanner;
 
-import javax.imageio.ImageIO;
-import javax.swing.Box;
-import javax.swing.BoxLayout;
-import javax.swing.ButtonGroup;
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
 import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JMenu;
-import javax.swing.JMenuBar;
-import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JPasswordField;
-import javax.swing.JRadioButton;
-import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
-import javax.swing.JTextField;
-import javax.swing.UIManager;
-import javax.swing.UnsupportedLookAndFeelException;
-import javax.swing.border.EmptyBorder;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 class P2PClient extends JFrame{
 	/**
 	 *
@@ -163,18 +113,11 @@ class P2PClient extends JFrame{
 					System.err.println("Server has close the connection: " + e);
 					break;
 				}
-				// can't happen with a String object but need the catch anyhow
-				catch(ClassNotFoundException e2) {
-				}
+				catch(ClassNotFoundException e) {}
 			}
 		}
 	}
 	
-
-	/**
-	 * @param args
-	 */
-
 	private void sendMessage(String s){
 			if(s.equalsIgnoreCase("whoisin")){
 				sendMessage(new ChatMessage(ChatMessage.WHOISIN, ""));	
@@ -204,6 +147,10 @@ class P2PClient extends JFrame{
 		P2PClient c = new P2PClient();
 		c.login();
 		c.sendMessage("hey sup");
+		Scanner s = new Scanner(System.in);
+		c.sendMessage(s.nextLine());
+		s.close();
+		c.logout();
 	}
 
 	

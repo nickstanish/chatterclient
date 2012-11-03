@@ -18,6 +18,10 @@ import java.awt.TexturePaint;
 import java.awt.TrayIcon;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.WindowAdapter;
@@ -32,13 +36,16 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.net.Socket;
+import java.util.Arrays;
 
 import javax.imageio.ImageIO;
+import javax.swing.AbstractAction;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
+import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenu;
@@ -51,6 +58,7 @@ import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.KeyStroke;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.border.EmptyBorder;
@@ -96,7 +104,7 @@ class ChatterClient extends JFrame{
 	private NotificationQueue queue;
 
 		//constructor
-	ChatterClient(String hostname, int portnumber){
+	public ChatterClient(String hostname, int portnumber){
 
 		loadOptions();
 		notificationListener = new MouseListener(){
@@ -236,6 +244,34 @@ class ChatterClient extends JFrame{
 				changeFocus(true);
 			}
 		});
+		/*
+		 * keyboard shortcuts
+		 * first connect the key to an actionmap
+		 * then create an action
+		 * then connect actionmap to the action
+		 */
+		
+		// CTRL + L to login advanced
+		mainPanel.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_L, InputEvent.CTRL_DOWN_MASK), "advanced");
+		AbstractAction advancedAction = new AbstractAction(){
+			public void actionPerformed(ActionEvent e){
+				advancedLoginShortcut();
+			}
+		};
+		mainPanel.getActionMap().put( "advanced", advancedAction );
+	}
+	private void advancedLoginShortcut(){
+		if(showAdvancedOptions()){
+			serverBox.setText("localhost");
+			loginBox.setText("tester_");
+		}
+		else{
+			resetAdvancedOptions();
+			loginBox.setText(options.defaultUsername);
+		}
+		
+		loginBox.requestFocusInWindow();
+		
 	}
 	private void notificationClicked(){
 		notificationWindow.setVisible(false);
@@ -440,11 +476,41 @@ class ChatterClient extends JFrame{
 	private void createLoginScreen(){
 		loginScreen = new JPanel();
 		JPanel panel = new JPanel();
-		
 		panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 		loginBox = new JTextField(options.defaultUsername,20);
 		passwordBox = new JPasswordField("titties", 20); //PasswordField
-
+		/*
+		 * use getPassword to get the password instead of getText
+		 * this returns a char array
+		 * this focus listener clears the password field when you click it
+		 * then if you don't type anything, it will bring the password back when you
+		 * remove focus
+		 */
+		passwordBox.addFocusListener(new FocusListener(){
+			char[] text;
+			@Override
+			public void focusGained(FocusEvent e) {
+				JPasswordField p =  (JPasswordField)e.getSource();
+				text = p.getPassword();
+				p.setText("");
+			}
+			@Override
+			public void focusLost(FocusEvent e) {
+				JPasswordField p =  (JPasswordField)e.getSource();
+				String s = "";
+				for(int i = 0; i<text.length; i++){
+					s += text[i];
+				}
+				if(p.getPassword().length == 0){
+					p.setText(s);
+				}
+				/*
+				 * security measures
+				 */
+				s = null;
+				Arrays.fill(text, '0');
+			}
+		});
 		loginBox.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent e){
 				login();
@@ -478,8 +544,8 @@ class ChatterClient extends JFrame{
 		//Adding of the Checkbox Panel
 		JPanel checkboxPanel = new JPanel(new GridLayout(0,1));
 		checkboxPanel.setBorder(new EmptyBorder(5, 10, 5, 0) );
-		JCheckBox rememPass = new JCheckBox("remember password");
-		JCheckBox autoLog = new JCheckBox("login automatically");
+		JCheckBox rememPass = new JCheckBox("remember password (soon)");
+		JCheckBox autoLog = new JCheckBox("login automatically (soon)");
 		
 		checkboxPanel.add(rememPass);
 		checkboxPanel.add(autoLog);
@@ -491,19 +557,7 @@ class ChatterClient extends JFrame{
 		buttonPanel.add(loginButton);
 		buttonPanel.add(Box.createRigidArea(new Dimension(0,5)));
 		buttonPanel.add(advancedButton);
-		advancedButton.setVisible(false);
-		panel.add(buttonPanel);
-		
-		autoLog.addActionListener(new ActionListener(){
-			public void actionPerformed(ActionEvent e){
-				if(loginBox.getText().equals("advanced"))
-					advancedButton.setVisible(true);
-				else
-					advancedButton.setVisible(false);
-					advancedPanel.setVisible(false);
-			}
-		});
-		
+		panel.add(buttonPanel);		
 		advancedPanel = new JPanel(new GridLayout(0,1));
 		serverBox = new JTextField(DEFAULT_HOST);
 		portBox = new JTextField(DEFAULT_PORT + "");
@@ -522,24 +576,33 @@ class ChatterClient extends JFrame{
 		advancedPanel.setMaximumSize(new Dimension(200,150));
 		advancedPanel.setPreferredSize(new Dimension(200,130));
 		panel.add(advancedPanel);
-		advancedPanel.setVisible(false);
 		panel.add(Box.createRigidArea(new Dimension(60,300)));
 		loginScreen.setPreferredSize(new Dimension(250,350));
 		loginScreen.add(panel);
+		/*
+		 * show login screen without advanced options
+		 * require shortcut to show them
+		 */
+		advancedPanel.setVisible(false);
+		advancedButton.setVisible(false);
 		cardsPanel.add(loginScreen, LOGIN_SCREEN);
 	}
 	private void resetAdvancedOptions(){
 		serverBox.setText(DEFAULT_HOST + "");
 		portBox.setText(DEFAULT_PORT + "");
 	}
-	private void showAdvancedOptions(){
+	private boolean showAdvancedOptions(){
 		if (advancedButton.getText().equalsIgnoreCase("Hide Advanced")){
 			advancedButton.setText("Advanced");
 			advancedPanel.setVisible(false);
+			advancedButton.setVisible(false);
+			return false;
 		}
 		else{
 			advancedButton.setText("Hide Advanced");
 			advancedPanel.setVisible(true);
+			advancedButton.setVisible(true);
+			return true;
 		}
 		
 		
@@ -552,8 +615,7 @@ class ChatterClient extends JFrame{
 			}
 			else{
 				sendMessage(new ChatMessage(ChatMessage.MESSAGE, s));		
-			}
-					
+			}	
 			messageBox.setText("");
 		}
 		
@@ -566,7 +628,7 @@ class ChatterClient extends JFrame{
 			
 		}
 		if (advancedButton.getText().equalsIgnoreCase("Hide Advanced")){
-			port = Integer.parseInt(portBox.getText());
+			port = Integer.valueOf(portBox.getText());
 			hostname = serverBox.getText();
 		}
 		else{
@@ -684,25 +746,6 @@ class ChatterClient extends JFrame{
         } catch (ClassNotFoundException ex) {
             ex.printStackTrace();
         }
-		/*
-		 try {
-	            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-	                if ("Nimbus".equals(info.getName())) {
-	                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
-	                    break;
-	                }
-	            }
-	        } catch (ClassNotFoundException ex) {
-	            java.util.logging.Logger.getLogger(ChatterClient.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-	        } catch (InstantiationException ex) {
-	            java.util.logging.Logger.getLogger(ChatterClient.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-	        } catch (IllegalAccessException ex) {
-	            java.util.logging.Logger.getLogger(ChatterClient.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-	        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
-	            java.util.logging.Logger.getLogger(ChatterClient.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-	        }
-		
-        */
 		javax.swing.SwingUtilities.invokeLater(new Runnable() {
             public void run() {
                 createAndShowGUI();

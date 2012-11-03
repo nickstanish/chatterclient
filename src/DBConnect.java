@@ -157,7 +157,7 @@ public class DBConnect {
 			*/
 			String username = "username";
 			String password = "passord";
-			if(db.login(username, md5(password), DBConnect.ENCRYPTED)){
+			if(db.login(username, md5(password))){
 				System.out.println("login successful");
 			}
 			else{

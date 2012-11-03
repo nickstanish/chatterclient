@@ -18,8 +18,9 @@ public class ChatMessage implements Serializable {
 	// MESSAGE an ordinary message
 	// LOGOUT to disconnect from the Server
 	// TYPING to display is typing message on other client
-	public static final int WHOISIN = 0, MESSAGE = 1, LOGOUT = 2, TYPING = 3;
+	public static final int WHOISIN = 0, MESSAGE = 1, LOGOUT = 2, TYPING = 3, PEER = 4;
 	private int type;
+	private String peerhost, peerport, peerlocalport, peerlocalhost;
 	private Date sent;
 	private String message, to, from;
 	private boolean isTyping;
@@ -41,10 +42,19 @@ public class ChatMessage implements Serializable {
 		this.type = type;
 		this.isTyping = isTyping;
 	}
-	
+	ChatMessage(int type, String host, String port, String lhost, String lport) {
+		this.type = type;
+		this.peerhost = host;
+		this.peerport = port;
+		this.peerlocalhost = host;
+		this.peerlocalport = lport;
+	}
 	// getters
 	int getType() {
 		return type;
+	}
+	public String[] getPeerConnection(){
+		return new String[]{peerhost, peerport, peerlocalhost, peerlocalport};
 	}
 	public Date getSentDate(){
 		return sent;
