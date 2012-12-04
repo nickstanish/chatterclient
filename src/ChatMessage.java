@@ -46,7 +46,7 @@ public class ChatMessage implements Serializable {
 		this.type = type;
 		this.peerhost = host;
 		this.peerport = port;
-		this.peerlocalhost = host;
+		this.peerlocalhost = lhost;
 		this.peerlocalport = lport;
 	}
 	// getters

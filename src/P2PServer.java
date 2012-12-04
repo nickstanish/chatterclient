@@ -66,6 +66,13 @@ public class P2PServer {
 		System.out.println(s);
 	}
 	private synchronized void broadcast(String message) {
+		
+		/**
+		 * if (al.size() > 1){
+		 *
+			al.get(0).socket.getInetAddress();
+		}
+	*/
 		for(int i = al.size(); --i >= 0;) {
 			ClientThread ct = al.get(i);
 			// try to write to the Client if it fails remove it from the list

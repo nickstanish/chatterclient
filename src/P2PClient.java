@@ -24,6 +24,11 @@ class P2PClient extends JFrame{
 	P2PClient(){
 
 	}
+	P2PClient(String host, int port){
+		this.hostname = host;
+		this.port = port;
+
+	}
 	public boolean start() {
 		// try to connect to the server
 		try {
