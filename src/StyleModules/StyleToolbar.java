@@ -1,6 +1,11 @@
+package StyleModules;
 import java.awt.Color;
 import java.awt.FlowLayout;
+import java.awt.Font;
 import java.awt.event.ItemListener;
+import java.awt.font.TextAttribute;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.swing.JComboBox;
 import javax.swing.JPanel;
@@ -22,11 +27,16 @@ public class StyleToolbar extends JPanel{
 	private JSpinner fontSizeSpinner;
 	StyleToolbar(){
 		setLayout(new FlowLayout(FlowLayout.LEADING));
-		boldButton = new JToggleButton("Bold", false);
+		boldButton = new JToggleButton("b", false);
+		boldButton.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 10));
 		add(boldButton);
-		italicsButton = new JToggleButton("Italics", false);
+		italicsButton = new JToggleButton("i", false);
+		italicsButton.setFont(new Font(Font.SANS_SERIF, Font.ITALIC, 10));
 		add(italicsButton);
-		underlineButton = new JToggleButton("Underline", false);
+		underlineButton = new JToggleButton("u", false);
+		Map<TextAttribute, Integer> fontAttributes = new HashMap<TextAttribute, Integer>();
+		fontAttributes.put(TextAttribute.UNDERLINE, TextAttribute.UNDERLINE_ON);
+		underlineButton.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 10).deriveFont(fontAttributes));
 		add(underlineButton);
 		SpinnerNumberModel fontSizeModel = new SpinnerNumberModel(12, 8, 48, 2);
 		fontSizeSpinner = new JSpinner(fontSizeModel);

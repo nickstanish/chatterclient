@@ -1,3 +1,4 @@
+package StyleModules;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
@@ -16,7 +17,6 @@ import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.JTextPane;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.text.BadLocationException;
@@ -26,76 +26,31 @@ import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 
 
-public class StyledTextPane extends JTextPane{
-	private Document doc;
+
+public class StyledTextPane extends StylePane{
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -1645679932047019540L;
 	StyledTextPane(){
-		init();
+		super();
 		Random r = new Random();
 		for(int x = 0; x < 12; x++){
-			SimpleAttributeSet style = getStyle(new Color(r.nextInt(256), r.nextInt(256), r.nextInt(256)), false, true, x + 10);
+			SimpleAttributeSet style = constructStyle(new Color(r.nextInt(256), r.nextInt(256), r.nextInt(256)), false, true, x + 10);
 			append("Styled TEXT test! #" + x, style);
 		}
-		GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
-		String[] x = ge.getAvailableFontFamilyNames();
+		//GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+		//String[] x = ge.getAvailableFontFamilyNames();
 		/*
 		for(int y = 0; y < x.length; y ++){
 			append(x[y], getStyle(x[y],0));
 		}
 		*/
-	}
-	StyledTextPane(int x){
-		init();
-	}
-	public SimpleAttributeSet getStyle( String font, int x){
-		SimpleAttributeSet style = new SimpleAttributeSet();
-	    StyleConstants.setFontFamily(style, font);
-	    return style;
-	}
-	public SimpleAttributeSet style;
-	public void setStyle(SimpleAttributeSet s){
-		style = s;
-		setParagraphAttributes(s, true);
-	}
-	private void init(){
-		doc = new DefaultStyledDocument();
-		setDocument(doc);
-	}
-	public SimpleAttributeSet getStyle( Color color, boolean bold, boolean italics, int size){
-		SimpleAttributeSet style = new SimpleAttributeSet();
-	    // Italic
-	    StyleConstants.setItalic(style, italics);
-	    // Bold
-	    StyleConstants.setBold(style, bold);
-	    // Font family
-	    StyleConstants.setFontFamily(style, "SansSerif");
-	    // Font size
-	    StyleConstants.setFontSize(style, size);
-	    // Background color
-	    //StyleConstants.setBackground(style, Color.white);
-	    // Foreground color
-	    StyleConstants.setForeground(style, color);
-	    return style;
-	}
-	public void append(String s, SimpleAttributeSet style){	
-	    try{
-	    	 doc.insertString(doc.getLength(),s + "\n", style);
-	    	 setCaretPosition(doc.getLength());
-	    }
-	    catch(BadLocationException e){
-	    	System.err.println("unable to append: " + e);
-	    }
-	   
-	}
+	}	
 	/**
 	 * @param args
 	 */
 	
-	public static StyleToolbar toolbar;
-	public static StyledTextPane box;
-	public static StyledTextPane pane;
-	private void getStyle(){
-		style = toolbar.getStyle();
-	}
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
 		JDialog loadingDialog = new JDialog(new JFrame(), "Loading ", false);
@@ -105,7 +60,7 @@ public class StyledTextPane extends JTextPane{
 		loadingDialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 		loadingDialog.setVisible(true);
 		
-		View window = new View();
+		View window = new View(new StyleToolbar(), new StyledTextPane(), new StyleSendBox());
 		window.pack();
 		window.setVisible(true);
 		loadingDialog.dispose();
@@ -114,7 +69,8 @@ public class StyledTextPane extends JTextPane{
 
 }
 class View extends JFrame{
-	private StyledTextPane pane, box;
+	private StyledTextPane pane;
+	private StyleSendBox box;
 	private StyleToolbar toolbar;
 	public void updateStyle(){
 		box.setStyle(toolbar.getStyle());
@@ -125,14 +81,18 @@ class View extends JFrame{
 		box.setText("");
 		box.requestFocusInWindow();
 	}
-	public View(){		
+	public void killExtraLine(){
+		box.setText("");
+		box.requestFocusInWindow();
+	}
+	public View(StyleToolbar toolbar, StylePane pane, StylePane box){		
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		JPanel panel = new JPanel();
-		pane = new StyledTextPane();
+		this.pane = (StyledTextPane)pane;
+		this.box = (StyleSendBox)box;
 		JScrollPane scroller = new JScrollPane(pane);
 		add(panel);
 		panel.add(scroller);
-		box = new StyledTextPane(0);
 		JScrollPane scroll = new JScrollPane(box);
 		JButton button = new JButton("Send");
 		button.addActionListener(new ActionListener(){
@@ -144,19 +104,22 @@ class View extends JFrame{
 		scroller.setPreferredSize(new Dimension(300,400));
 		scroll.setPreferredSize(new Dimension(300,80));
 		panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-		toolbar = new StyleToolbar();
+		this.toolbar = toolbar;
 		box.addKeyListener(new KeyListener(){
 			@Override
 			public void keyPressed(KeyEvent k) {
 				// TODO Auto-generated method stub
+				if(k.getKeyCode() == KeyEvent.VK_ENTER){
+					send();
+				}
 			}
 
 			@Override
 			public void keyReleased(KeyEvent k) {
-				// TODO Auto-generated method stub
 				if(k.getKeyCode() == KeyEvent.VK_ENTER){
-					send();
+					killExtraLine();
 				}
+				
 			}
 
 			@Override

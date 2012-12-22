@@ -15,7 +15,7 @@ import javax.crypto.spec.PBEParameterSpec;
  *  
  * @author Giulio
  */
-public class ToolKit {
+public class EncrypytionToolKit {
 
 	    public Cipher ecipher;
 	    public Cipher dcipher;
@@ -28,7 +28,7 @@ public class ToolKit {
 	    // Iteration count
 	    int iterationCount = 19;
 
-	    ToolKit(SecretKey key) {
+	    EncrypytionToolKit(SecretKey key) {
 	        try {
 	            ecipher = Cipher.getInstance("DES");
 	            dcipher = Cipher.getInstance("DES");
@@ -40,7 +40,7 @@ public class ToolKit {
 	        } catch (java.security.InvalidKeyException e) {
 	        }
 	    }
-	    ToolKit(String passPhrase) {
+	    EncrypytionToolKit(String passPhrase) {
 	        try {
 	            // Create the key
 	            KeySpec keySpec = new PBEKeySpec(passPhrase.toCharArray(), salt, iterationCount);
@@ -75,7 +75,6 @@ public class ToolKit {
 	        } catch (javax.crypto.BadPaddingException e) {
 	        } catch (IllegalBlockSizeException e) {
 	        } catch (UnsupportedEncodingException e) {
-	        } catch (java.io.IOException e) {
 	        }
 	        return null;
 	    }
@@ -105,17 +104,25 @@ public class ToolKit {
     	    // Generate a temporary key. In practice, you would save this key.
     	    // See also Encrypting with DES Using a Pass Phrase.
     	    SecretKey key = KeyGenerator.getInstance("DES").generateKey();
+    	    System.out.println(key);
 
     	    // Create encrypter/decrypter class
-    	    ToolKit encrypter = new ToolKit("fuck you");
+    	    EncrypytionToolKit encrypter = new EncrypytionToolKit("simplekey");
     	    
 
     	    // Encrypt
-    	    String encrypted = encrypter.encrypt("Don't tell anybody!");
+    	    int reencrypts = 1;
+    	    String encrypted = encrypter.encrypt("i dont know");
+    	    for(int i = 0; i < reencrypts; i ++){
+    	    	encrypted = encrypter.encrypt(encrypted);
+    	    }
     	    System.out.println(encrypted);
 
     	    // Decrypt
     	    String decrypted = encrypter.decrypt(encrypted);
+    	    for(int i = 0; i < reencrypts; i ++){
+    	    	decrypted = encrypter.decrypt(decrypted);
+    	    }
     	    System.out.println(decrypted);
     	} catch (Exception e) {
     	}

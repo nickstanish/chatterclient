@@ -15,7 +15,7 @@ import java.sql.Statement;
  * 3. do your biz
  * 4. close();
  * 
- * Restricted user for SELECT
+ * Limited user for SELECT
  * nstanish_user
  * xiySbU1[qk~n
  *

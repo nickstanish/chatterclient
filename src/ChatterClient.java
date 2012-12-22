@@ -64,6 +64,10 @@ import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+
+import Notifications.Note;
+import Notifications.NotificationQueue;
+import Notifications.NotificationWindow;
 class ChatterClient extends JFrame{
 	/**
 	 *
@@ -131,9 +135,9 @@ class ChatterClient extends JFrame{
 			try{
 				//message_box_icon
 				BufferedImage original = ImageIO.read(new File("media/icons/logo.png"));
-				image = new BufferedImage(20, 20, BufferedImage.TYPE_INT_ARGB);
+				image = new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB);
 				Graphics2D g = image.createGraphics();
-				g.drawImage(original, 0, 0, 20, 20, null);
+				g.drawImage(original, 0, 0, 16, 16, null);
 				g.dispose();
 				g.setComposite(AlphaComposite.Src);
 				g.setRenderingHint(RenderingHints.KEY_INTERPOLATION,RenderingHints.VALUE_INTERPOLATION_BILINEAR);

@@ -1,6 +1,5 @@
-import java.util.ArrayList;
-
-import javax.swing.JWindow;
+package Notifications;
+import java.util.LinkedList;
 
 /**
  * 
@@ -13,12 +12,12 @@ import javax.swing.JWindow;
  *
  */
 public class NotificationQueue extends Thread{
-	private ArrayList<Note> list;
+	private LinkedList<Note> list;
 	public static final int SHOW_ONE_FOR_ALL = 0;
 	private NotificationWindow window;
 	private int displayPreference;
 	public NotificationQueue(NotificationWindow window, int displayPreference) {
-		list = new ArrayList<Note>();
+		list = new LinkedList<Note>();
 		this.window = window;
 		this.displayPreference = displayPreference;
 		start();
@@ -31,16 +30,17 @@ public class NotificationQueue extends Thread{
 	 */
 	public void run(){
 		while(true){
-			while(!list.isEmpty()){
-				synchronized(list){
+			synchronized(list){
+				while(!list.isEmpty()){
+				
 					
 					String total = "";
 					if(list.size()>1){
 						total = " (" + list.size() + ")";
 					}
 					
-					window.setMessage(list.get(0).message);
-					window.setTitle(list.get(0).title + total );
+					window.setMessage(list.getFirst().message);
+					window.setTitle(list.getFirst().title + total );
 					Notification notification = new Notification(window, 3000);
 										
 					if(displayPreference == SHOW_ONE_FOR_ALL){
@@ -49,9 +49,10 @@ public class NotificationQueue extends Thread{
 					else{
 						while(notification.isShowing()){
 							//wait
+							//or better yet, check for a click boolean and break the loop
 						}
 						
-						if(!list.isEmpty()) list.remove(0);
+						if(!list.isEmpty()) list.removeFirst();
 						
 					}
 				}
@@ -66,11 +67,18 @@ public class NotificationQueue extends Thread{
 			}
 		}
 	}
-	public synchronized void clear(){
-		list.clear();
+	public void clear(){
+		// performed on click
+		// good idea would be to set a boolean false
+		synchronized(list){
+			list.clear();
+		}
 	}
-	public synchronized void add(Note n){
-		list.add(n);
+	public void add(Note n){
+		synchronized(list){
+			list.add(n);
+		}
+		
 		
 	}
 

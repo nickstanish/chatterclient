@@ -1,11 +1,14 @@
-import java.awt.Color;
+import java.awt.AlphaComposite;
 import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
+import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 
+import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -18,28 +21,56 @@ public class ServerStatusLabel extends JLabel{
 	private ObjectOutputStream sOutput;	
 	private boolean up = false;
 	private BufferedImage bi;
+	private BufferedImage red, green;
+	/**
+	 * technically this isn't the right way to do this, but we will go ahead
+	 * with it for now... this should be an invisible client, id should be -1, and shouldn't actually
+	 * be turned into a thread or anything. we don't want to waste any memory from the server
+	 */
 	public ServerStatusLabel(String server, int port){
 		super("---");
 		bi = new BufferedImage(25,25,BufferedImage.TYPE_INT_ARGB);
+		try {
+			red = ImageIO.read(new File("media/icons/red_light.png"));
+			red = resize(red, 25,25);
+			green = ImageIO.read(new File("media/icons/green_light.png"));
+			green = resize(green, 25, 25);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		redraw();
 		ServerStatusThread t = new ServerStatusThread(server, port);
 		t.start();
 	}
 	public void redraw(){
-		Graphics2D g = bi.createGraphics();
-		g.setColor(Color.black);
-		g.fillRect(0,0,bi.getWidth(), bi.getHeight());
+		//Graphics2D g = bi.createGraphics();
+		//g.setColor(Color.black);
+		//g.fillRect(0,0,bi.getWidth(), bi.getHeight());
 		if(!up){
-			g.setColor(Color.red);
+			//g.setColor(Color.red);
+			bi = red;
 			this.setText("Server is down");
 		}
 		else{
-			g.setColor(Color.green);
+			//g.setColor(Color.green);
+			bi = green;
 			this.setText("Server is up");
 		}
-		g.fillOval(0,0,bi.getWidth(), bi.getHeight());
+		//g.fillOval(3,3,bi.getWidth()-5, bi.getHeight()-5);
 		this.setIcon(new ImageIcon(bi));
 		this.revalidate();
+	}
+	public BufferedImage resize(BufferedImage original, int width, int height){
+		BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+		Graphics2D g = image.createGraphics();
+		g.setRenderingHint(RenderingHints.KEY_RENDERING,RenderingHints.VALUE_RENDER_QUALITY);
+		g.drawImage(original, 0, 0, width, height, null);
+		g.dispose();
+		g.setComposite(AlphaComposite.Src);
+		g.setRenderingHint(RenderingHints.KEY_INTERPOLATION,RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+		g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
+		return image;
 	}
 	class ServerStatusThread extends Thread{
 		String host;

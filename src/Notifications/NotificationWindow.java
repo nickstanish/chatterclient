@@ -1,5 +1,5 @@
+package Notifications;
 import java.awt.Color;
-import java.awt.GraphicsEnvironment;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 
@@ -17,7 +17,7 @@ public class NotificationWindow extends JWindow {
 	private static final long serialVersionUID = -3228619876556206647L;
 	private JLabel titleLabel, messageLabel;
 	private String title, message;
-	NotificationWindow(){
+	public NotificationWindow(){
 		JComponent comp = (JComponent)getContentPane();
 		title = "";
 		message = "";

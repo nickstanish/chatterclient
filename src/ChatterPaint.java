@@ -176,7 +176,6 @@ class ChatterPaintPanel extends JPanel implements MouseListener, MouseMotionList
 		Graphics2D g = (Graphics2D)g1;
 		paintToImage();
 		g.drawImage(paintedImage, 0, 0 , null);
-		System.out.println(pathList.size());
 	    for(int i = 0; i < pathList.size(); i++){
 	    	g.setStroke(new BasicStroke(pathList.get(i).getSize(),BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
 	    	g.setColor(pathList.get(i).getColor());

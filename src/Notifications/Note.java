@@ -1,3 +1,4 @@
+package Notifications;
 /**
  * 
  * Just a basic container for the notifications lib
