@@ -65,9 +65,10 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
-import Notifications.Note;
-import Notifications.NotificationQueue;
-import Notifications.NotificationWindow;
+import notifications.Note;
+import notifications.NotificationQueue;
+import notifications.NotificationWindow;
+
 class ChatterClient extends JFrame{
 	/**
 	 *

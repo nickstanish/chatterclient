@@ -1,4 +1,4 @@
-package StyleModules;
+package style;
 
 import java.awt.Color;
 

@@ -1,4 +1,4 @@
-package Notifications;
+package notifications;
 import java.util.LinkedList;
 
 /**

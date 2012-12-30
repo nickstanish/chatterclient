@@ -1,4 +1,4 @@
-package StyleModules;
+package style;
 import java.awt.Color;
 import java.awt.FlowLayout;
 import java.awt.Font;
