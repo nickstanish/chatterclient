@@ -10,6 +10,10 @@ import javax.swing.JTextArea;
 
 
 public class AboutWindow extends JFrame {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -769006692300090479L;
 	private JPanel mainPanel;
 	AboutWindow(){
 		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);

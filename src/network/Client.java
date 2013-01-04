@@ -12,14 +12,13 @@ public class Client implements Connection {
 	private ObjectInputStream in;		// to read from the socket
 	private ObjectOutputStream out;		// to write on the socket
 	private Socket socket;
-	public boolean connected = false;
 	public Client(String host, int port){
 		this.host = host;
 		this.port = port;
 	}
 
 	@Override
-	public boolean connect() {
+	public boolean connect(String username) {
 		try {
 			socket = new Socket(host, port);
 		} 
@@ -37,16 +36,13 @@ public class Client implements Connection {
 		}
 		// creates the Thread to listen from the server 
 		//new ListenFromServer().start();
-		// Send our username to the server this is the only message that we
-		// will send as a String. All other messages will be ChatMessage objects
 		try{
-			out.writeObject("");
+			out.writeObject(username);
 		}
 		catch (IOException eIO) {
 			disconnect();
 			return false;
 		}
-		// success we inform the caller that it worked
 		return true;
 	}
 
@@ -67,10 +63,16 @@ public class Client implements Connection {
 
 	@Override
 	public boolean send(int type, Object c) {
-		if(connected){
-			
+		if(socket.isConnected()){
+			try {
+				// TODO: fix object write out
+				out.writeObject("");
+			} catch (IOException e) {
+				System.err.println(e);
+				return false;
+			}
 		}
-		return false;
+		return true;
 
 	}
 
@@ -82,8 +84,13 @@ public class Client implements Connection {
 
 	@Override
 	public boolean connected() {
-		// TODO Auto-generated method stub
-		return connected;
+		if(socket != null){
+			return socket.isConnected();
+		}
+		else{
+			return false;
+		}
+		
 	}
 
 }

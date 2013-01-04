@@ -32,13 +32,18 @@ public class StyledTextPane extends StylePane{
 	 * 
 	 */
 	private static final long serialVersionUID = -1645679932047019540L;
-	StyledTextPane(){
+	public StyledTextPane(){
 		super();
-		Random r = new Random();
-		for(int x = 0; x < 12; x++){
+		setEditable(false);
+		/*
+		 * Random r = new Random();
+		 */
+		/*
+		 * for(int x = 0; x < 12; x++){
 			SimpleAttributeSet style = constructStyle(new Color(r.nextInt(256), r.nextInt(256), r.nextInt(256)), false, true, x + 10);
 			append("Styled TEXT test! #" + x, style);
 		}
+		*/
 		//GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
 		//String[] x = ge.getAvailableFontFamilyNames();
 		/*

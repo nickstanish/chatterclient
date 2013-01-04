@@ -1,7 +1,7 @@
 package network;
 
 public interface Connection{
-	public boolean connect();
+	public boolean connect(String username);
 	public void disconnect();
 	public boolean send(int type, Object c);
 	public boolean connected();

@@ -1,3 +1,4 @@
+// TODO: clean this up
 
 import java.io.Serializable;
 import java.util.Date;
@@ -27,22 +28,22 @@ public class ChatMessage implements Serializable {
 	private String username;
 	
 	// constructor
-	ChatMessage(int type, String message) {
+	public ChatMessage(int type, String message) {
 		this.type = type;
 		this.message = message;
 	}
-	ChatMessage(String to, int type, String message, String from){
+	public ChatMessage(String to, int type, String message, String from){
 		sent = new Date();
 		this.to = to;
 		this.from = from;
 		this.message = message;
 		this.type = type;
 	}
-	ChatMessage(int type, boolean isTyping) {
+	public ChatMessage(int type, boolean isTyping) {
 		this.type = type;
 		this.isTyping = isTyping;
 	}
-	ChatMessage(int type, String host, String port, String lhost, String lport) {
+	public ChatMessage(int type, String host, String port, String lhost, String lport) {
 		this.type = type;
 		this.peerhost = host;
 		this.peerport = port;
@@ -50,7 +51,7 @@ public class ChatMessage implements Serializable {
 		this.peerlocalport = lport;
 	}
 	// getters
-	int getType() {
+	public int getType() {
 		return type;
 	}
 	public String[] getPeerConnection(){

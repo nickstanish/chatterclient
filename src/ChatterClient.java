@@ -1,48 +1,29 @@
-import java.awt.AWTException;
-import java.awt.AlphaComposite;
 import java.awt.CardLayout;
 import java.awt.Color;
 import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.FontFormatException;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
 import java.awt.GridLayout;
-import java.awt.MenuItem;
-import java.awt.PopupMenu;
-import java.awt.Rectangle;
-import java.awt.RenderingHints;
-import java.awt.SystemTray;
-import java.awt.TexturePaint;
-import java.awt.TrayIcon;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.awt.geom.Rectangle2D;
-import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.Serializable;
 import java.net.Socket;
 import java.util.Arrays;
 
-import javax.imageio.ImageIO;
 import javax.swing.AbstractAction;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
-import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComponent;
@@ -54,9 +35,7 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPasswordField;
-import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.KeyStroke;
 import javax.swing.UIManager;
@@ -65,9 +44,9 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
-import notifications.Note;
-import notifications.NotificationQueue;
-import notifications.NotificationWindow;
+import options.Options;
+import options.OptionsPanel;
+import style.StyledTextPane;
 
 class ChatterClient extends JFrame{
 	/**
@@ -80,9 +59,9 @@ class ChatterClient extends JFrame{
 	private File file;
 	private JLabel isTypingLabel;
 	private JButton loginButton, advancedButton, sendButton, resetAdvancedButton;
-	private CTextArea chatArea;
+	private StyledTextPane chatArea;
 	private boolean loggedIn = false;
-	JMenuItem logoutMenu;
+	private JMenuItem logoutMenu;
 	private static final String LOGIN_SCREEN = "Login";
 	private static final String CHAT_SCREEN = "Chat";
 	private static final String DEFAULT_HOST = "data.cs.purdue.edu";
@@ -93,116 +72,19 @@ class ChatterClient extends JFrame{
 	private Options options = new Options();
 	private boolean isTyping = false;
 	private boolean focused; //used to check if window has focus
-
+	private TaskbarManager taskbar;
 	// for I/O
 	private ObjectInputStream sInput;		// to read from the socket
 	private ObjectOutputStream sOutput;		// to write on the socket
 	private Socket socket;
-	//system tray
-	private SystemTray tray;
-	private TrayIcon trayIcon;
-	private PopupMenu trayMenu;
-	private MenuItem logoutTrayItem, exitTrayItem;
-	//notifications
-	private MouseListener notificationListener;
-	private NotificationWindow notificationWindow;
-	private NotificationQueue queue;
+	private NotificationManager notifier;
 
 		//constructor
 	public ChatterClient(String hostname, int portnumber){
 
 		loadOptions();
-		notificationListener = new MouseListener(){
-			@Override
-			public void mouseClicked(MouseEvent arg0) {}
-			@Override
-			public void mouseEntered(MouseEvent arg0) {}
-			@Override
-			public void mouseExited(MouseEvent arg0) {}
-			@Override
-			public void mousePressed(MouseEvent arg0) {
-				//open client window
-				notificationClicked();
-			}
-			@Override
-			public void mouseReleased(MouseEvent arg0) {}
-		};
-		notificationWindow = new NotificationWindow();
-		notificationWindow.addMouseListener(notificationListener);
-		queue = new NotificationQueue(notificationWindow, NotificationQueue.SHOW_ONE_FOR_ALL);
-		if(SystemTray.isSupported()){
-			tray = SystemTray.getSystemTray();
-			BufferedImage image;
-			try{
-				//message_box_icon
-				BufferedImage original = ImageIO.read(new File("media/icons/logo.png"));
-				image = new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB);
-				Graphics2D g = image.createGraphics();
-				g.drawImage(original, 0, 0, 16, 16, null);
-				g.dispose();
-				g.setComposite(AlphaComposite.Src);
-				g.setRenderingHint(RenderingHints.KEY_INTERPOLATION,RenderingHints.VALUE_INTERPOLATION_BILINEAR);
-				g.setRenderingHint(RenderingHints.KEY_RENDERING,RenderingHints.VALUE_RENDER_QUALITY);
-				g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
-			}
-			catch(IOException ie){
-				System.err.println("error: " + ie);
-				image = new BufferedImage(15,15,BufferedImage.TYPE_INT_ARGB);
-				Graphics2D g = image.createGraphics();
-				g.setColor(Color.blue);
-				g.fill(new Rectangle2D.Double(0,0,15,15));
-				g.setColor(Color.white);
-				g.fill(new Rectangle2D.Double(3,3,9,9));
-				g.dispose();
-				g.setComposite(AlphaComposite.Src);
-				g.setRenderingHint(RenderingHints.KEY_INTERPOLATION,RenderingHints.VALUE_INTERPOLATION_BILINEAR);
-				g.setRenderingHint(RenderingHints.KEY_RENDERING,RenderingHints.VALUE_RENDER_QUALITY);
-				g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
-			}
-			trayMenu = new PopupMenu();
-			logoutTrayItem = new MenuItem("Logout");
-			logoutTrayItem.addActionListener(new ActionListener(){
-				public void actionPerformed(ActionEvent e){
-					logout();
-				}
-			});
-			exitTrayItem = new MenuItem("Exit");
-			exitTrayItem.addActionListener(new ActionListener(){
-				public void actionPerformed(ActionEvent e){
-					exit();
-				}
-			});
-			trayMenu.add(logoutTrayItem);
-			trayMenu.add(exitTrayItem);
-			try {
-				trayIcon = new TrayIcon(image, "ChatterBox", trayMenu);
-				trayIcon.addMouseListener(new MouseListener(){
-					@Override
-					public void mouseClicked(MouseEvent arg0) {
-						bringToFront();
-					}
-					@Override
-					public void mouseEntered(MouseEvent arg0) {}
-					@Override
-					public void mouseExited(MouseEvent arg0) {}
-					@Override
-					public void mousePressed(MouseEvent arg0) {}
-					@Override
-					public void mouseReleased(MouseEvent arg0) {}
-				});
-				trayIcon.addActionListener(new ActionListener(){
-					@Override
-					public void actionPerformed(ActionEvent e) {
-						bringToFront();		
-					}					
-				});
-				tray.add(trayIcon);
-			} catch (AWTException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			
-		}
+		taskbar = new TaskbarManager(this);
+		notifier = new NotificationManager(this);
 		Container contentPane = getContentPane();
 		mainPanel = new JPanel();
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -278,17 +160,12 @@ class ChatterClient extends JFrame{
 		loginBox.requestFocusInWindow();
 		
 	}
-	private void notificationClicked(){
-		notificationWindow.setVisible(false);
-		queue.clear();
-		bringToFront();
-	}
 	private void changeFocus(boolean x){
 		focused = x;
 	}
-	private void bringToFront(){
-		this.setVisible(true);
-		this.setState(JFrame.NORMAL);
+	public void bringToFront(){
+		setVisible(true);
+		setState(JFrame.NORMAL);
 		if(loggedIn){
 			messageBox.requestFocusInWindow();
 		}
@@ -339,7 +216,7 @@ class ChatterClient extends JFrame{
 			//fix whoisin time parse bug with a start of line regex - 9/2/12
 			msg = msg.replaceFirst("^(\\d{1,2}:\\d{1,2}:\\d{1,2}[:\\s]{1,2})", "");
 		}
-		chatArea.append(msg + "\n");		// append to the ClientGUI JTextArea (or whatever)
+		chatArea.append(msg, null);		// append to the ClientGUI JTextArea (or whatever)
 		chatArea.setCaretPosition(chatArea.getDocument().getLength());
 		/*
 		 * seems like the best way to implement notifications for now
@@ -347,7 +224,7 @@ class ChatterClient extends JFrame{
 		//SystemTray.isSupported() for tray
 		if(this.getState() == JFrame.ICONIFIED || !this.isVisible() || !focused){
 			//trayIcon.displayMessage("New ChatterBox Message", "Yeah you got a message...", TrayIcon.MessageType.NONE);
-			queue.add(new Note("ChatterBox: ", "New Message"));
+			notifier.notify("ChatterBox: ", "New Message");
 			//System.out.println("should have gotten a notification around now");
 		}
 		
@@ -416,8 +293,7 @@ class ChatterClient extends JFrame{
 					break;
 				}
 				// can't happen with a String object but need the catch anyhow
-				catch(ClassNotFoundException e2) {
-				}
+				catch(ClassNotFoundException e2) {}
 			}
 		}
 	}
@@ -471,7 +347,7 @@ class ChatterClient extends JFrame{
 		menubar.add(filemenu);
 		setJMenuBar(menubar);
 	}
-	private void exit(){
+	public void exit(){
 		if(loggedIn){
 			logout();
 		}
@@ -651,7 +527,7 @@ class ChatterClient extends JFrame{
 		logoutMenu.setEnabled(true);
 		messageBox.requestFocusInWindow();
 	}
-	private void logout(){
+	public void logout(){
 		switchView(0);
 		sendMessage(new ChatMessage(ChatMessage.LOGOUT, ""));
 		disconnect();
@@ -666,9 +542,8 @@ class ChatterClient extends JFrame{
 		chatScreen.setLayout(new BoxLayout(chatScreen, BoxLayout.PAGE_AXIS));
 		isTypingLabel = new JLabel(" ");
 		file = new File("media/background.png");
-		chatArea = new CTextArea(file);
-		chatArea.setEditable(false);
-		chatArea.setLineWrap(true);
+		chatArea = new StyledTextPane();
+		//chatArea.setLineWrap(true);
 		JScrollPane scrollingChatPanel = new JScrollPane(chatArea);
 		scrollingChatPanel.setPreferredSize(new Dimension(300,200));
 		messageBox = new JTextField("");
@@ -717,12 +592,10 @@ class ChatterClient extends JFrame{
 	}
 	private static void createAndShowGUI() {
         // Create and set up the window.
-		// Avoid statics within game
+		// Avoid statics
         ChatterClient window = new ChatterClient("data.cs.purdue.edu", 1500);
-        window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         window.setTitle("ChatterBox");
         window.setSize(new Dimension(500,600));
-        // TODO auto-save before exiting
         window.pack();
         window.setVisible(true);
     }
@@ -770,115 +643,14 @@ class ChatterClient extends JFrame{
 			return;
 		}
 		catch(IOException ie){
-			System.out.println(ie + "" );
+			System.err.println(ie + "" );
 		}
 		catch(ClassNotFoundException e){
-			System.out.println(e + "" );
+			System.err.println(e + "" );
 		}
 		catch(Exception e){
-			System.out.println(e);
+			System.err.println(e);
 		}
 		options = new Options();
-	}
-}
-
-class CTextArea extends JTextArea{
-	/**
-	 * 
-	 */
-
-	private static final long serialVersionUID = -217191299156683782L;
-	private BufferedImage bufferedImage;
-	private TexturePaint texturePaint;
-	CTextArea(File file){
-		super();
-		try{
-			bufferedImage = ImageIO.read(file);
-		    Rectangle rect = new Rectangle(0, 0, bufferedImage.getWidth(null), bufferedImage.getHeight(null));
-		    texturePaint = new TexturePaint(bufferedImage, rect);
-		    setOpaque(false);
-		}
-		catch(IOException ie){
-			System.out.println(ie);
-			append("Background Media Not Found: " + file + "\n");
-		}
-	    
-	}
-	 public void paintComponent(Graphics g)
-	  {
-		 if(bufferedImage!= null){
-			 Graphics2D g2 = (Graphics2D) g;
-			 g2.setPaint(texturePaint);
-		 }
-	    
-	    g.fillRect(0, 0, getWidth(), getHeight());
-	    super.paintComponent(g);
-	  }
-}
-class OptionsPanel extends JPanel{
-	private static final long serialVersionUID = 2748129716144166752L;
-	public Options options;
-	public ButtonGroup showTimeGroup = new ButtonGroup();
-	public JRadioButton showTimeOn, showTimeOff;
-	public JTextField defaultNameField;
-	public JTextField passwordField;
-	
-	OptionsPanel(Options opt){
-		options = opt;
-		showTimeOn = new JRadioButton("Yes" , options.showTime);
-		showTimeOff = new JRadioButton("No" , !options.showTime);
-		defaultNameField = new JTextField(15);
-		defaultNameField.setText(options.defaultUsername);
-		setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-		JPanel pane[] = new JPanel[4];
-		for(int x = 0; x < 4; x++){
-			pane[x] = new JPanel();
-			add(pane[x]);
-			pane[x].setLayout(new BoxLayout(pane[x], BoxLayout.X_AXIS));
-			pane[x].setPreferredSize(new Dimension(300,20));
-			pane[x].setMaximumSize(new Dimension(300,20));
-		}
-		showTimeGroup.add(showTimeOn);
-		showTimeGroup.add(showTimeOff);
-		JLabel showTimeLabel = new JLabel("Show message time?  ");
-		JLabel setDefaultUsername = new JLabel("Username:  ");
-		pane[0].add(showTimeLabel);
-		pane[0].add(showTimeOn);
-		pane[0].add(showTimeOff);
-		pane[1].add(setDefaultUsername);
-		pane[1].add(defaultNameField);
-		//add "*"'s for the characters in the password box for legitimacy mainly cuz its badass
-		//add remember "Login Button" --radio buttons
-		setPreferredSize(new Dimension(300,150));
-
-	}
-	public void saveOptions(){
-		//add serializable shit here\
-		//file == config.ini
-		options.showTime = showTimeOn.isSelected();
-		options.defaultUsername = defaultNameField.getText().trim();
-		try{
-    		FileOutputStream fos = new FileOutputStream(new File("config.ini"));
-    		ObjectOutputStream out = new ObjectOutputStream(fos);
-    		out.writeObject(options);
-    		out.close();
-    		fos.close();
-		}
-		catch(IOException ie){
-			System.out.println("" + ie);
-		}
-		
-	}
-}
-class Options implements Serializable{
-	/**
-	 * options contained in here
-	 */
-	private static final long serialVersionUID = 1L;
-	public String defaultUsername;
-	public boolean showTime;
-	Options(){
-		defaultUsername = "username";
-		showTime = true;
 	}
 }
