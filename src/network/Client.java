@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.net.SocketException;
 
 
 public class Client implements Connection {
@@ -21,6 +22,7 @@ public class Client implements Connection {
 	public boolean connect(String username) {
 		try {
 			socket = new Socket(host, port);
+			socket.setKeepAlive(true);
 		} 
 		catch(Exception e) {
 			System.err.println("Error connecting to server:" + e);
@@ -48,6 +50,11 @@ public class Client implements Connection {
 
 	@Override
 	public void disconnect() {
+		try {
+			socket.setKeepAlive(false);
+		} catch (SocketException e) {
+			e.printStackTrace();
+		}
 		try { 
 			if(in != null) in.close();
 		} catch(Exception e) {} // not much else I can do

@@ -40,6 +40,13 @@ public class Server {
 				// format message saying we are waiting
 				display("Server waiting for Clients on port " + port + ".");
 				Socket socket = serverSocket.accept();  	// accept connection
+				try{
+					socket.setKeepAlive(true);
+				}
+				catch(SocketException e){
+					System.err.println(e);
+					System.err.println("Unable to set keepalive true");
+				}
 				// if I was asked to stop
 				if(!keepGoing)
 					break;
@@ -259,6 +266,13 @@ public class Server {
 		
 		// try to close everything
 		private void close() {
+			try{
+				socket.setKeepAlive(false);
+			}
+			catch(SocketException e){
+				System.err.println(e);
+				System.err.println("Unable to set keepalive false");
+			}
 			// try to close the connection
 			try {
 				if(sOutput != null) sOutput.close();

@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.Arrays;
 
 import javax.swing.AbstractAction;
@@ -184,6 +185,13 @@ class ChatterClient extends JFrame{
 			//TODO: change show display on login screen
 			return false;
 		}
+		try{
+			socket.setKeepAlive(true);
+		}
+		catch(SocketException e){
+			System.err.println(e);
+			System.err.println("Unable to set keepalive true");
+		}
 		/* Creating both Data Stream */
 		try{
 			sInput  = new ObjectInputStream(socket.getInputStream());
@@ -247,6 +255,13 @@ class ChatterClient extends JFrame{
 	 * Close the Input/Output streams and disconnect not much to do in the catch clause
 	 */
 	private void disconnect() {
+		try{
+			socket.setKeepAlive(false);
+		}
+		catch(SocketException e){
+			System.err.println(e);
+			System.err.println("Unable to set keepalive false");
+		}
 		try { 
 			if(sInput != null) sInput.close();
 		}
@@ -637,7 +652,7 @@ class ChatterClient extends JFrame{
             File file = new File("config.ini");
             FileInputStream fis = new FileInputStream(file);
     		ObjectInputStream in = new ObjectInputStream(fis);
-			options = (Options)in.readObject();
+			options = (options.Options)in.readObject();
 			in.close();
 			fis.close();
 			return;
@@ -646,7 +661,7 @@ class ChatterClient extends JFrame{
 			System.err.println(ie + "" );
 		}
 		catch(ClassNotFoundException e){
-			System.err.println(e + "" );
+			System.err.println(e);
 		}
 		catch(Exception e){
 			System.err.println(e);
