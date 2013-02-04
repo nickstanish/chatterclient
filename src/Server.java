@@ -1,11 +1,25 @@
 
-import java.io.*;
-import java.net.*;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.net.SocketException;
+import java.net.SocketTimeoutException;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.logging.FileHandler;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.logging.SimpleFormatter;
 
 /* cli server */
 public class Server {
+	private final static Logger LOGGER = Logger.getLogger(Server.class .getName());
+	private static FileHandler fileTxt;
+	private static SimpleFormatter formatterTxt;
+	
 	private static int connectionId;
 	// an ArrayList to keep the list of the Client
 	private ArrayList<ClientThread> al;
@@ -14,45 +28,90 @@ public class Server {
 	private SimpleDateFormat dateFormat;
 	private int port;
 	// the boolean that will be turned of to stop the server
-	private boolean keepGoing;
+	public volatile boolean keepGoing;
 
 	/*
 	 *  server constructor that receive the port to listen to for connection as parameter
 	 *  in console
 	 */
 	public Server(int port) {
+		// Get the global logger to configure it
+		final Thread mainThread = Thread.currentThread();
+		Runtime.getRuntime().addShutdownHook(new Thread() {
+			@Override
+			public void run(){
+				System.out.println("Begin Shutdownhook...breaking connections, please allow 10 seconds for timeout");
+				close();
+				try {
+					mainThread.join();
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				
+				System.out.println("Done.");
+			}
+		});
+	    LOGGER.setLevel(Level.ALL);
+		try {
+			fileTxt = new FileHandler("logs/server.txt",0,1,true);
+			formatterTxt = new SimpleFormatter();
+			fileTxt.setFormatter(formatterTxt);
+			LOGGER.addHandler(fileTxt);
+		} catch (SecurityException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 		this.port = port;
-		dateFormat = new SimpleDateFormat("h:mm:ss:");
+		
 		// ArrayList for the Client list
 		al = new ArrayList<ClientThread>();
 	}
-	
+	public void close(){
+		
+		for(int i = al.size(); --i >= 0;) {
+			al.remove(i);
+		}
+		log(Level.INFO,"Closing");
+		keepGoing = false;
+	}
 	public void start() {
 		keepGoing = true;
-		System.out.println("Starting ChatterBox Server " + version);
+		LOGGER.log(Level.INFO, "*************************************\n");
+		LOGGER.log(Level.INFO, "Starting ChatterBox Server " + version);
 		/* create socket server and wait for connection requests */
 		try {
 			// the socket used by the server
 			ServerSocket serverSocket = new ServerSocket(port);
+			//15 second time-out on blocking during accept
+			serverSocket.setSoTimeout(10000);
 			// infinite loop to wait for connections
-			while(keepGoing) 
-			{
-				// format message saying we are waiting
-				display("Server waiting for Clients on port " + port + ".");
-				Socket socket = serverSocket.accept();  	// accept connection
+			log(Level.INFO,"Server waiting for Clients on port " + port + ".");
+			while(keepGoing) {
+				
+				Socket socket;
 				try{
-					socket.setKeepAlive(true);
+					socket = serverSocket.accept();  	// accept connection
 				}
-				catch(SocketException e){
-					System.err.println(e);
-					System.err.println("Unable to set keepalive true");
+				catch(SocketTimeoutException ste){
+					socket = null;
 				}
-				// if I was asked to stop
-				if(!keepGoing)
-					break;
-				ClientThread t = new ClientThread(socket);  // make a thread of it
-				al.add(t);									// save it in the ArrayList
-				t.start();
+				if(socket != null){
+					try{
+						socket.setKeepAlive(true);
+					}
+					catch(SocketException e){
+						System.err.println(e);
+						System.err.println("Unable to set keepalive true");
+					}
+					// if I was asked to stop
+					if(!keepGoing)
+						break;
+					ClientThread t = new ClientThread(socket);  // make a thread of it
+					al.add(t);									// save it in the ArrayList
+					t.start();
+				}
 			}
 			// I was asked to stop
 			try {
@@ -65,25 +124,25 @@ public class Server {
 					tc.socket.close();
 					}
 					catch(IOException ioE) {
-						// not much I can do
+						log(Level.SEVERE,ioE.toString());
 					}
 				}
 			}
 			catch(Exception e) {
-				display("Exception closing the server and clients: " + e);
+				log(Level.SEVERE,"Exception closing the server and clients: " + e);
 			}
 		}
 		// something went bad
 		catch (IOException e) {
-			display("Exception on new ServerSocket: " + e + "\n");
+			log(Level.SEVERE,"Exception on new ServerSocket: " + e + "\n");
 		}
+		log(Level.OFF,"Terminated\n");
 	}		
 	/*
-	 * Display an event (not a message) to the console or the GUI
+	 * log errors/messages
 	 */
-	private void display(String msg) {
-		String event = dateFormat.format(new Date()) + " " + msg;
-		System.out.println(event);
+	private void log(Level level, String msg) {
+		LOGGER.log(level,msg);
 	}
 	/*
 	 *  to broadcast a message to all Clients
@@ -100,7 +159,7 @@ public class Server {
 			// try to write to the Client if it fails remove it from the list
 			if(!ct.writeMsg(new ChatMessage(ChatMessage.MESSAGE, messageOut))) {
 				al.remove(i);
-				display("Disconnected Client " + ct.username + " removed from list.");
+				log(Level.INFO,"Disconnected Client " + ct.username + " removed from list.");
 			}
 		}
 	}
@@ -115,12 +174,10 @@ public class Server {
 			
 			if(al.get(i).id != id){
 				ClientThread ct = al.get(i);
-			
-				
 				// try to write to the Client if it fails remove it from the list
 				if(!ct.writeMsg(cm)) {
 					al.remove(i);
-					display("Disconnected Client " + ct.username + " removed from list.");
+					log(Level.INFO,"Disconnected Client " + ct.username + " removed from list.");
 				}
 			}
 			
@@ -168,10 +225,8 @@ public class Server {
 		// create a server object and start it
 		Server server = new Server(portNumber);
 		server.start();
+		
 	}
-
-	/** One instance of this thread will run for each client */
-	
 	/*
 	 * pretty much does all the work in here
 	 */
@@ -202,11 +257,11 @@ public class Server {
 				sInput  = new ObjectInputStream(socket.getInputStream());
 				// read the username
 				username = (String) sInput.readObject();
-				display(username + " just connected at " + socket.getInetAddress());
+				log(Level.INFO,username + " just connected at " + socket.getInetAddress());
 				
 			}
 			catch (IOException e) {
-				display("Exception creating new Input/output Streams: " + e);
+				log(Level.SEVERE,"Exception creating new Input/output Streams: " + e);
 				return;
 			}
 			catch (ClassNotFoundException e) {
@@ -225,7 +280,7 @@ public class Server {
 					cm = (ChatMessage) sInput.readObject();
 				}
 				catch (IOException e) {
-					display(username + " Exception reading Streams: " + e);
+					log(Level.SEVERE,username + " Exception reading Streams: " + e);
 					break;				
 				}
 				catch(ClassNotFoundException e2) {
@@ -303,8 +358,8 @@ public class Server {
 			}
 			// if an error occurs, do not abort just inform the user
 			catch(IOException e) {
-				display("Error sending message to " + username);
-				display(e.toString());
+				log(Level.SEVERE,"Error sending message to " + username);
+				log(Level.SEVERE,e.toString());
 			}
 			return true;
 		}
