@@ -335,7 +335,7 @@ class ChatterClient extends JFrame{
 	private void createMenu(){
 		JMenuBar menubar = new JMenuBar();
 		JMenu filemenu = new JMenu("File");
-		
+		JMenu helpmenu = new JMenu("Help");
 		JMenuItem optionsMenu = new JMenuItem("Options");
 		filemenu.add(optionsMenu);
 			
@@ -358,9 +358,20 @@ class ChatterClient extends JFrame{
 				exit();
 			}
 		});
+		JMenuItem aboutMenuItem = new JMenuItem("About");
+		aboutMenuItem.addActionListener(new ActionListener(){
+			public void actionPerformed(ActionEvent e){
+				showAboutWindow();
+			}
+		});
+		helpmenu.add(aboutMenuItem);
 		filemenu.add(exitMenu);
 		menubar.add(filemenu);
+		menubar.add(helpmenu);
 		setJMenuBar(menubar);
+	}
+	public void showAboutWindow(){
+		new AboutWindow(this);
 	}
 	public void exit(){
 		if(loggedIn){

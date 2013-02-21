@@ -1,62 +1,67 @@
 import java.awt.Dimension;
 import java.awt.Font;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
+import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextArea;
 
 
-public class AboutWindow extends JFrame {
+public class AboutWindow extends JDialog implements ActionListener{
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = -769006692300090479L;
 	private JPanel mainPanel;
-	AboutWindow(){
-		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-		mainPanel = new JPanel(new GridBagLayout());
-		add(mainPanel);
-		mainPanel.setPreferredSize(new Dimension(300,400));
+	public AboutWindow(JFrame f){
+		super(f,"About", true);
+		mainPanel = new JPanel();
+		mainPanel.setLayout(new BoxLayout(mainPanel,BoxLayout.Y_AXIS));
+		JPanel p[] = new JPanel[3];
+		for(int i = 0; i < 3; i++){
+			p[i] = new JPanel();
+		}
+		JLabel titleLabel = new JLabel("ChatterBox");
+		titleLabel.setFont(new Font("serif",Font.BOLD,24));
+		p[0].add(titleLabel);
+		JTextArea description = new JTextArea(40,20);
+		description.setBackground(mainPanel.getBackground());
+		description.setWrapStyleWord(true);
+		description.setLineWrap(true);
+		description.setText("Java instant messenger built on socket connections.\n\nAuthors:\nJoey Imburgia and Nick Stanish");
+		description.setEditable(false);
+		p[1].add(description);
+		JButton okButton = new JButton("OK");
+		okButton.addActionListener(this);
+		p[2].add(okButton);
+		for(int i = 0; i < 3; i++){
+			mainPanel.add(p[i]);
+		}
+		getContentPane().add(mainPanel);
+		mainPanel.setPreferredSize(new Dimension(250,200));
 		setResizable(false);
-		GridBagConstraints c = new GridBagConstraints();
-		int row = 0;
-		c.gridx = 0;
-		c.weightx = 0.0;
-		c.weighty = 0.05;
-		c.anchor = GridBagConstraints.PAGE_START;
-		c.gridy = row++;
-		JLabel title = new JLabel("ChatterBox");
-		title.setFont(new Font("serif", Font.BOLD, 30));
-		mainPanel.add(title,c);
-		c.gridy = row++;
-		c.weighty = 0.01;
-		c.anchor = GridBagConstraints.LINE_START;
-		c.fill = GridBagConstraints.HORIZONTAL;
-		mainPanel.add(new JTextArea("100% Java based instant messenger."),c);
-		c.gridx = 0;
-		c.gridy = row++;
-		mainPanel.add(new JLabel("Version: 1.0"),c);
-		c.gridy = row++;
-		mainPanel.add(new JLabel("Authors: Joey Imburgia and Nick Stanish"),c);
-		c.gridy = row++;
-		//mainPanel.add(new JLabel("Authors: Joey Imburgia and Nick Stanish"),c);
-		c.anchor = GridBagConstraints.CENTER;
-		c.weighty = 0.05;
-		
-		//display
+		setLocationRelativeTo(f);
 		pack();
 		setVisible(true);
-	}
+		
+;	}
 	/**
 	 * @param args
 	 */
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
-		new AboutWindow();
+		new AboutWindow(null);
 
+	}
+	@Override
+	public void actionPerformed(ActionEvent e) {
+		setVisible(false);
+		
 	}
 
 }

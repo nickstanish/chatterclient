@@ -25,7 +25,6 @@ public class Server {
 	private ArrayList<ClientThread> al;
 	private double version = 1.1;
 	// to display time
-	private SimpleDateFormat dateFormat;
 	private int port;
 	// the boolean that will be turned of to stop the server
 	public volatile boolean keepGoing;
@@ -149,7 +148,7 @@ public class Server {
 	 */
 	private synchronized void broadcast(String message) {
 		// add HH:mm:ss and \n to the message
-		String time = dateFormat.format(new Date());
+		String time = new SimpleDateFormat("h:mm:ss:").format(new Date());
 		String messageOut = time + " " + message + "\n";
 		//display(message);
 		// we loop in reverse order in case we would have to remove a Client
