@@ -295,7 +295,7 @@ class ChatterClient extends JFrame{
 					else if(message.getType() == ChatMessage.TYPING){
 						//TODO: display that the person is typing
 						if(message.getTyping()){
-							isTypingLabel.setText(message.getUsername() + " is typing");
+							isTypingLabel.setText(message.getUsername() + ": " + message.getMessage());
 						}
 						else{
 							isTypingLabel.setText("");
@@ -612,7 +612,7 @@ class ChatterClient extends JFrame{
 	private void isTyping(){
 		if(loggedIn){
 			isTyping = !messageBox.getText().equals("");
-			sendMessage(new ChatMessage(ChatMessage.TYPING, isTyping));	
+			sendMessage(new ChatMessage(ChatMessage.TYPING, isTyping,messageBox.getText().trim()));	
 		}
 		
 	}

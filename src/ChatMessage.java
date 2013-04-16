@@ -39,9 +39,10 @@ public class ChatMessage implements Serializable {
 		this.message = message;
 		this.type = type;
 	}
-	public ChatMessage(int type, boolean isTyping) {
+	public ChatMessage(int type, boolean isTyping, String message) {
 		this.type = type;
 		this.isTyping = isTyping;
+		this.message = message;
 	}
 	public ChatMessage(int type, String host, String port, String lhost, String lport) {
 		this.type = type;
