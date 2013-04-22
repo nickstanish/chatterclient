@@ -515,11 +515,32 @@ class ChatterClient extends JFrame{
 		
 	}
 	private void sendMessage(){
-		if(!messageBox.getText().trim().equals("")){
-			String s = messageBox.getText().trim();
-			if(s.equalsIgnoreCase("./whoisin")){
-				sendMessage(new ChatMessage(ChatMessage.WHOISIN, ""));	
+		String s = messageBox.getText().trim();
+		if(!s.equals("")){
+			int len = s.length();
+			if(len >= 2 && s.substring(0,2).equals("./")){
+				display("#: " + s);
+				boolean cmd = false;
+				// @commands
+				if(s.substring(2).equalsIgnoreCase("help")){
+					display("No help for you!");
+					cmd = true;
+				}
+				if(s.substring(2).equalsIgnoreCase("whoisin")){
+					sendMessage(new ChatMessage(ChatMessage.WHOISIN, ""));
+					cmd = true;
+				}
+				if(s.substring(2).equalsIgnoreCase("logout")){
+					logout();
+					cmd = true;
+				}
+				
+				if(!cmd){
+					display("'"+ s.substring(2) + "' command not found");
+				}
+				
 			}
+			
 			else{
 				sendMessage(new ChatMessage(ChatMessage.MESSAGE, s));		
 			}	
@@ -611,10 +632,12 @@ class ChatterClient extends JFrame{
 	}
 	private void isTyping(){
 		if(loggedIn){
-			isTyping = !messageBox.getText().equals("");
-			
-			if(!messageBox.getText().substring(0,1).equals(".") && !messageBox.getText().substring(1,2).equals("/"))
-			sendMessage(new ChatMessage(ChatMessage.TYPING, isTyping,messageBox.getText().trim()));	
+			String s = messageBox.getText().trim();
+			int len = s.length();
+			if(len == 1 && s.substring(0,1).equals(".")) s = "";
+			if(len >= 2 && s.substring(0,2).equals("./")) s = "";
+			isTyping = !s.equals("");
+			sendMessage(new ChatMessage(ChatMessage.TYPING,isTyping, s));	
 		}
 		
 	}
