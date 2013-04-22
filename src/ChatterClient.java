@@ -65,7 +65,7 @@ class ChatterClient extends JFrame{
 	private JMenuItem logoutMenu;
 	private static final String LOGIN_SCREEN = "Login";
 	private static final String CHAT_SCREEN = "Chat";
-	private static final String DEFAULT_HOST = "data.cs.purdue.edu";
+	private static final String DEFAULT_HOST = "128.211.236.62";
 	private static final int DEFAULT_PORT = 1500;
 	private String username;
 	private int port;
@@ -295,6 +295,7 @@ class ChatterClient extends JFrame{
 					else if(message.getType() == ChatMessage.TYPING){
 						//TODO: display that the person is typing
 						if(message.getTyping()){
+							if(!message.getMessage().substring(0,1).equals(".") && !message.getMessage().substring(1,2).equals("/"))
 							isTypingLabel.setText(message.getUsername() + ": " + message.getMessage());
 						}
 						else{
@@ -517,7 +518,15 @@ class ChatterClient extends JFrame{
 	private void sendMessage(){
 		if(!messageBox.getText().trim().equals("")){
 			String s = messageBox.getText().trim();
-			if(s.equalsIgnoreCase("whoisin")){
+			if(s.substring(0, 6).equalsIgnoreCase("./spam")){
+				if(s.compareToIgnoreCase(s.substring(0, 6)) > 1)
+				for(int i = 0; i < 100; i++)
+				{
+				sendMessage(new ChatMessage(ChatMessage.MESSAGE, s.substring(7)));	
+				}
+			}
+			else
+			if(s.equalsIgnoreCase("./whoisin")){
 				sendMessage(new ChatMessage(ChatMessage.WHOISIN, ""));	
 			}
 			else{
@@ -619,7 +628,7 @@ class ChatterClient extends JFrame{
 	private static void createAndShowGUI() {
         // Create and set up the window.
 		// Avoid statics
-        ChatterClient window = new ChatterClient("data.cs.purdue.edu", 1500);
+        ChatterClient window = new ChatterClient("ChatterClient.default.host", 1500);
         window.setTitle("ChatterBox");
         window.setSize(new Dimension(500,600));
         window.pack();
