@@ -181,7 +181,7 @@ class ChatterClient extends JFrame{
 			socket = new Socket(hostname, port);
 		} 
 		catch(Exception ec) {
-			System.err.println("Error connectiong to server:" + ec);
+			System.err.println("Error connecting to server:" + ec.getLocalizedMessage());
 			//TODO: change show display on login screen
 			return false;
 		}
@@ -256,7 +256,7 @@ class ChatterClient extends JFrame{
 	 */
 	private void disconnect() {
 		try{
-			socket.setKeepAlive(false);
+			if(socket != null) socket.setKeepAlive(false);
 		}
 		catch(SocketException e){
 			System.err.println(e);
@@ -277,7 +277,7 @@ class ChatterClient extends JFrame{
 			
 	}
 	private void connectionFailed() {
-		JOptionPane.showMessageDialog(null, "Connection Failed");
+		JOptionPane.showMessageDialog(this, "Connection Failed");
 	}
 	/*
 	 * a class that waits for the message from the server and append them to the JTextArea
@@ -301,6 +301,8 @@ class ChatterClient extends JFrame{
 								isTypingLabel.setText("");
 							}
 							break;
+					default:
+						break;
 					
 					}
 				}
