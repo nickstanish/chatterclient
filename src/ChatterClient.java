@@ -65,7 +65,7 @@ class ChatterClient extends JFrame{
 	private JMenuItem logoutMenu;
 	private static final String LOGIN_SCREEN = "Login";
 	private static final String CHAT_SCREEN = "Chat";
-	private static final String DEFAULT_HOST = "vizbits.net";
+	public static final String DEFAULT_HOST = "vizbits.net";
 	private static final int DEFAULT_PORT = 1500;
 	private String username;
 	private int port;
@@ -289,18 +289,19 @@ class ChatterClient extends JFrame{
 			while(true) {
 				try {
 					ChatMessage message = (ChatMessage)sInput.readObject();
-					if(message.getType() == ChatMessage.MESSAGE){
-						display(message.getMessage());
-					}
-					else if(message.getType() == ChatMessage.TYPING){
-						//TODO: display that the person is typing
-						if(message.getTyping()){
-							isTypingLabel.setText(message.getUsername() + ": " + message.getMessage());
-						}
-						else{
-							isTypingLabel.setText("");
-						}
-						
+					switch(message.getType()){
+						case MESSAGE:
+							display(message.getMessage());
+							break;
+						case TYPING:
+							if(message.getTyping()){
+								isTypingLabel.setText(message.getFrom() + ": " + message.getMessage());
+							}
+							else{
+								isTypingLabel.setText("");
+							}
+							break;
+					
 					}
 				}
 				catch(IOException e) {
@@ -527,7 +528,7 @@ class ChatterClient extends JFrame{
 					cmd = true;
 				}
 				if(s.substring(2).equalsIgnoreCase("whoisin")){
-					sendMessage(new ChatMessage(ChatMessage.WHOISIN, ""));
+					sendMessage(new ChatMessage(ChatMessage.Type.WHOISIN, ""));
 					cmd = true;
 				}
 				if(s.substring(2).equalsIgnoreCase("logout")){
@@ -542,7 +543,7 @@ class ChatterClient extends JFrame{
 			}
 			
 			else{
-				sendMessage(new ChatMessage(ChatMessage.MESSAGE, s));		
+				sendMessage(new ChatMessage(ChatMessage.Type.MESSAGE, s));		
 			}	
 			messageBox.setText("");
 		}
@@ -576,7 +577,7 @@ class ChatterClient extends JFrame{
 	}
 	public void logout(){
 		switchView(0);
-		sendMessage(new ChatMessage(ChatMessage.LOGOUT, ""));
+		sendMessage(new ChatMessage(ChatMessage.Type.LOGOUT, ""));
 		disconnect();
 		logoutMenu.setEnabled(false);
 		loggedIn = false;
@@ -637,7 +638,7 @@ class ChatterClient extends JFrame{
 			if(len == 1 && s.substring(0,1).equals(".")) s = "";
 			if(len >= 2 && s.substring(0,2).equals("./")) s = "";
 			isTyping = !s.equals("");
-			sendMessage(new ChatMessage(ChatMessage.TYPING,isTyping, s));	
+			sendMessage(new ChatMessage(ChatMessage.Type.TYPING,isTyping, s, username));	
 		}
 		
 	}

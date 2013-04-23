@@ -106,7 +106,7 @@ public class ServerStatusLabel extends JLabel{
 				while(true) {
 					try {
 						ChatMessage message = (ChatMessage)sInput.readObject();
-						if(message.getType() == ChatMessage.MESSAGE){
+						if(message.getType() == ChatMessage.Type.MESSAGE){
 						}
 		
 					}
@@ -126,7 +126,7 @@ public class ServerStatusLabel extends JLabel{
 	public static void main(String[] args) {
 		JFrame window = new JFrame("ServerLabel");
 		window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		window.getContentPane().add(new ServerStatusLabel("localhost", 1500));
+		window.getContentPane().add(new ServerStatusLabel(ChatterClient.DEFAULT_HOST, 1500));
 		window.pack();
 		window.setVisible(true);
 		window.setSize(300,300);
