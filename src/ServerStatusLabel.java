@@ -28,7 +28,7 @@ public class ServerStatusLabel extends JLabel{
 	 * be turned into a thread or anything. we don't want to waste any memory from the server
 	 */
 	public ServerStatusLabel(String server, int port){
-		super("---");
+		super(" ");
 		bi = new BufferedImage(25,25,BufferedImage.TYPE_INT_ARGB);
 		try {
 			red = ImageIO.read(new File("media/icons/red_light.png"));
@@ -40,8 +40,7 @@ public class ServerStatusLabel extends JLabel{
 			e.printStackTrace();
 		}
 		redraw();
-		ServerStatusThread t = new ServerStatusThread(server, port);
-		t.start();
+		(new ServerStatusThread(server, port)).start();
 	}
 	public void redraw(){
 		//Graphics2D g = bi.createGraphics();
@@ -81,23 +80,28 @@ public class ServerStatusLabel extends JLabel{
 		}
 		@Override
 		public void run(){
-			while(true){
 				try {
-				socket = new Socket(host, port);
-				up = true;
-				try{
-					sInput  = new ObjectInputStream(socket.getInputStream());
-					sOutput = new ObjectOutputStream(socket.getOutputStream());
-				}
-				catch (IOException eIO) {
-					up = false;
-				}
+					
+					socket = new Socket(host, port);
+					System.out.println("connected");
+					up = true;
+					
+					
+					Thread.sleep(1000);
+					try{
+						sInput  = new ObjectInputStream(socket.getInputStream());
+						sOutput = new ObjectOutputStream(socket.getOutputStream());
+						sOutput.writeObject("invisible");
+						new ListenFromServer().start();
+					}
+					catch (IOException eIO) {
+						up = false;
+					}
 				} 
 				catch(Exception ec) {
 					up = false;
 				}
 				redraw();
-			}
 			
 		}
 		class ListenFromServer extends Thread {
@@ -107,6 +111,7 @@ public class ServerStatusLabel extends JLabel{
 					try {
 						ChatMessage message = (ChatMessage)sInput.readObject();
 						if(message.getType() == ChatMessage.Type.MESSAGE){
+							System.out.println(message.getMessage());
 						}
 		
 					}

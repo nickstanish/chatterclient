@@ -18,8 +18,11 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.net.HttpURLConnection;
 import java.net.Socket;
 import java.net.SocketException;
+import java.net.URL;
+import java.net.UnknownHostException;
 import java.util.Arrays;
 
 import javax.swing.AbstractAction;
@@ -517,6 +520,25 @@ class ChatterClient extends JFrame{
 		
 		
 	}
+	public static boolean isInternetReachable(){
+        try {
+            //make a URL to a known source
+            URL url = new URL("http://vizbits.net");
+            //open a connection to that source
+            HttpURLConnection urlConnect = (HttpURLConnection)url.openConnection();
+            urlConnect.setConnectTimeout(2000);
+            //trying to retrieve data from the source. If there
+            //is no connection, this line will fail
+            urlConnect.getContent();
+
+        } catch (UnknownHostException e) {
+            return false;
+        }
+        catch (IOException e) {
+            return false;
+        }
+        return true;
+    }
 	private void sendMessage(){
 		String s = messageBox.getText().trim();
 		if(!s.equals("")){
@@ -652,6 +674,12 @@ class ChatterClient extends JFrame{
         window.setSize(new Dimension(500,600));
         window.pack();
         window.setVisible(true);
+        /*
+		 * server isn't accessible
+		 */
+		if(!isInternetReachable()){
+			JOptionPane.showMessageDialog(window, "Unable to connect to server.\n1. check your internet connection\n2. visit vizbits.net to see if server is available");
+		}
     }
 	private void switchView(int screen){
 		CardLayout cl = (CardLayout)(cardsPanel.getLayout());
