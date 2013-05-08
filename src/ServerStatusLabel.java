@@ -108,9 +108,11 @@ public class ServerStatusLabel extends JLabel{
 
 			public void run() {
 				while(true) {
+					break;
+				}
+					/*
 					try {
-						ChatMessage message = (ChatMessage)sInput.readObject();
-						if(message.getType() == ChatMessage.Type.MESSAGE){
+
 							System.out.println(message.getMessage());
 						}
 		
@@ -121,6 +123,7 @@ public class ServerStatusLabel extends JLabel{
 					}
 					catch(ClassNotFoundException e) {}
 				}
+				*/
 			}
 		}
 	}

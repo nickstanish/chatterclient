@@ -16,6 +16,7 @@ import java.awt.event.WindowEvent;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
@@ -66,7 +67,7 @@ class ChatterClient extends JFrame{
 	private JLabel isTypingLabel, loginErrorLabel;
 	private JButton loginButton, advancedButton, sendButton, resetAdvancedButton;
 	private StyledTextPane chatArea;
-	private boolean loggedIn = false;
+	private boolean loggedIn = false, realtime = false;
 	private JMenuItem logoutMenu;
 	private static final String LOGIN_SCREEN = "Login";
 	private static final String CHAT_SCREEN = "Chat";
@@ -266,11 +267,11 @@ class ChatterClient extends JFrame{
 		chatArea.setText("");
 	}
 	
-	/*
-	 * To send a message to the server
+	/**
+	 * To send a string to the server to be broadcasted
 	 */
 	void sendMessage(String s) {
-		out.println("0" + s);
+		send('0', s);
 	}
 	/*
 	 * When something goes wrong
@@ -311,7 +312,24 @@ class ChatterClient extends JFrame{
 			while(true) {
 				try {
 						String line = in.readLine();
-						if(line != null) display(line);
+						if(line != null){
+							switch(line.charAt(0)){
+								case '0': // message
+									display(line.substring(1));
+									break;
+								case '2': // istyping
+									if(line.charAt(1) == '0') isTypingLabel.setText(" ");
+									else isTypingLabel.setText(line.substring(2));
+									
+									break;
+								case 'E': // Error
+									display(line.substring(1));
+									break;
+								default:
+									display("  Error:\n " + line);
+									break;
+							}
+						}
 					
 					/*
 					ChatMessage message = (ChatMessage)sInput.readObject();
@@ -590,11 +608,11 @@ class ChatterClient extends JFrame{
 				boolean cmd = false;
 				// @commands
 				if(s.substring(2).equalsIgnoreCase("help")){
-					display("No help for you!");
+					display("whoisin\nlogout\nclear\nrealtime\n");
 					cmd = true;
 				}
 				else if(s.substring(2).equalsIgnoreCase("whoisin")){
-					sendMessage(".whoisin");
+					send('4', ".whoisin");
 					cmd = true;
 				}
 				else if(s.substring(2).equalsIgnoreCase("logout")){
@@ -603,6 +621,11 @@ class ChatterClient extends JFrame{
 				}
 				else if(s.substring(2).equalsIgnoreCase("clear")){
 					clearChat();
+					cmd = true;
+				}
+				else if(s.substring(2).equalsIgnoreCase("realtime")){
+					realtime = !realtime; // toggle realtime on/off
+					send('3', booleanToBit(realtime) + "" );
 					cmd = true;
 				}
 				
@@ -653,11 +676,11 @@ class ChatterClient extends JFrame{
 		clearChat();
 		disconnect();
 		switchView(0);
-		hideLoginError();
 		logoutMenu.setEnabled(false);
 		loggedIn = false;
 		loginBox.requestFocusInWindow();
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		hideLoginError();
 	}
 
 	private void createChatScreen(){
@@ -714,9 +737,17 @@ class ChatterClient extends JFrame{
 			if(len == 1 && s.substring(0,1).equals(".")) s = "";
 			if(len >= 2 && s.substring(0,2).equals("./")) s = "";
 			isTyping = !s.equals("");
-			//sendMessage(new ChatMessage(ChatMessage.Type.TYPING,isTyping, s, username));	
+			if(realtime) send('2',booleanToBit(isTyping) + s);
+			else send('2',booleanToBit(isTyping) + "");
 		}
 		
+	}
+	public static char booleanToBit(boolean b){
+		if(b) return '1';
+		else return '0';
+	}
+	private void send(char code, String s){
+		out.println(code + s);
 	}
 	private static void createAndShowGUI() {
         // Create and set up the window.
@@ -762,15 +793,22 @@ class ChatterClient extends JFrame{
 
 	}
 	private void loadOptions(){
+		File file = new File("config.ini");
 		try{
-			
-            File file = new File("config.ini");
             FileInputStream fis = new FileInputStream(file);
     		ObjectInputStream in = new ObjectInputStream(fis);
 			options = (options.Options)in.readObject();
 			in.close();
 			fis.close();
 			return;
+		}
+		catch(FileNotFoundException fnf){
+			try {
+				file.createNewFile();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 		catch(IOException ie){
 			System.err.println(ie + "" );
