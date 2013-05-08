@@ -48,6 +48,7 @@ public class TaskbarManager {
 					client.logout();
 				}
 			});
+			logoutTrayItem.setEnabled(false);
 			exitTrayItem = new MenuItem("Exit");
 			exitTrayItem.addActionListener(new ActionListener(){
 				public void actionPerformed(ActionEvent e){
@@ -89,6 +90,12 @@ public class TaskbarManager {
 			System.err.println("System tray not supported");
 		}
 		
+	}
+	public void kill(){
+		tray.remove(trayIcon);
+	}
+	public void login(boolean b){
+		logoutTrayItem.setEnabled(b);
 	}
 	public BufferedImage resize(BufferedImage original, int width, int height){
 		BufferedImage image = new BufferedImage(width,height,BufferedImage.TYPE_INT_ARGB);

@@ -13,11 +13,13 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.PrintWriter;
 import java.net.HttpURLConnection;
 import java.net.Socket;
 import java.net.SocketException;
@@ -61,7 +63,7 @@ class ChatterClient extends JFrame{
 	private JTextField loginBox, messageBox, serverBox, portBox;
 	private JPasswordField passwordBox;
 	private File file;
-	private JLabel isTypingLabel;
+	private JLabel isTypingLabel, loginErrorLabel;
 	private JButton loginButton, advancedButton, sendButton, resetAdvancedButton;
 	private StyledTextPane chatArea;
 	private boolean loggedIn = false;
@@ -78,11 +80,17 @@ class ChatterClient extends JFrame{
 	private boolean focused; //used to check if window has focus
 	private TaskbarManager taskbar;
 	// for I/O
-	private ObjectInputStream sInput;		// to read from the socket
-	private ObjectOutputStream sOutput;		// to write on the socket
+	private PrintWriter out;		// to read from the socket
+	private BufferedReader in;		// to write on the socket
 	private Socket socket;
 	private NotificationManager notifier;
-
+	// TODO: remove icon from taskbar at close
+	// TODO: logout
+	// TODO: redo all message sending operations
+	// TODO: login validation check
+	
+	
+	
 		//constructor
 	public ChatterClient(String hostname, int portnumber){
 
@@ -150,6 +158,9 @@ class ChatterClient extends JFrame{
 			}
 		};
 		mainPanel.getActionMap().put( "advanced", advancedAction );
+		if(!isInternetReachable()){
+			showLoginError("Default server not available");
+		}
 	}
 	private void advancedLoginShortcut(){
 		if(showAdvancedOptions()){
@@ -184,6 +195,7 @@ class ChatterClient extends JFrame{
 			socket = new Socket(hostname, port);
 		} 
 		catch(Exception ec) {
+			connectionFailed();
 			System.err.println("Error connecting to server:" + ec.getLocalizedMessage());
 			//TODO: change show display on login screen
 			return false;
@@ -193,28 +205,37 @@ class ChatterClient extends JFrame{
 		}
 		catch(SocketException e){
 			System.err.println(e);
+			connectionFailed();
 			System.err.println("Unable to set keepalive true");
 		}
 		/* Creating both Data Stream */
 		try{
-			sInput  = new ObjectInputStream(socket.getInputStream());
-			sOutput = new ObjectOutputStream(socket.getOutputStream());
+			in  = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+			out = new PrintWriter(socket.getOutputStream(), true);
 		}
 		catch (IOException eIO) {
+			connectionFailed();
 			System.err.println("Exception creating new Input/output Streams: " + eIO);
 			return false;
 		}
 		// creates the Thread to listen from the server 
-		new ListenFromServer().start();
+		
 		// Send our username to the server this is the only message that we
 		// will send as a String. All other messages will be ChatMessage objects
-		try{
-			sOutput.writeObject(username);
-		}
-		catch (IOException eIO) {
-			disconnect();
+		out.println(username);
+		try {
+			String validation = in.readLine();
+			if(validation.charAt(0) == '0'){
+				showLoginError("Username taken");
+				return false;
+			}
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			connectionFailed();
 			return false;
 		}
+		new ListenFromServer().start();
 		// success we inform the caller that it worked
 		return true;
 	}
@@ -241,17 +262,15 @@ class ChatterClient extends JFrame{
 		
 
 	}
+	private void clearChat(){
+		chatArea.setText("");
+	}
 	
 	/*
 	 * To send a message to the server
 	 */
-	void sendMessage(ChatMessage msg) {
-		try {
-			sOutput.writeObject(msg);
-		}
-		catch(IOException e) {
-			System.err.println("Exception writing to server: " + e);
-		}
+	void sendMessage(String s) {
+		out.println("0" + s);
 	}
 	/*
 	 * When something goes wrong
@@ -266,11 +285,11 @@ class ChatterClient extends JFrame{
 			System.err.println("Unable to set keepalive false");
 		}
 		try { 
-			if(sInput != null) sInput.close();
+			if(in != null) in.close();
 		}
 		catch(Exception e) {} // not much else I can do
 		try {
-			if(sOutput != null) sOutput.close();
+			if(out != null) out.close();
 		}
 		catch(Exception e) {} // not much else I can do
         try{
@@ -280,7 +299,7 @@ class ChatterClient extends JFrame{
 			
 	}
 	private void connectionFailed() {
-		JOptionPane.showMessageDialog(this, "Connection Failed");
+		showLoginError("Connection Failed");
 	}
 	/*
 	 * a class that waits for the message from the server and append them to the JTextArea
@@ -291,6 +310,10 @@ class ChatterClient extends JFrame{
 		public void run() {
 			while(true) {
 				try {
+						String line = in.readLine();
+						if(line != null) display(line);
+					
+					/*
 					ChatMessage message = (ChatMessage)sInput.readObject();
 					switch(message.getType()){
 						case MESSAGE:
@@ -308,13 +331,15 @@ class ChatterClient extends JFrame{
 						break;
 					
 					}
+					*/
 				}
 				catch(IOException e) {
 					System.err.println("Server has close the connection: " + e);
+					showLoginError("Server closed connection");
+					switchView(0);
 					break;
 				}
 				// can't happen with a String object but need the catch anyhow
-				catch(ClassNotFoundException e2) {}
 			}
 		}
 	}
@@ -383,6 +408,7 @@ class ChatterClient extends JFrame{
 		if(loggedIn){
 			logout();
 		}
+		taskbar.kill();
 		dispose();
 		System.exit(0);
 	}
@@ -442,14 +468,21 @@ class ChatterClient extends JFrame{
 			}
 		});
 		JPanel labelPanel = new JPanel();
-		labelPanel.add(new JLabel("Login to start chatting"));
+		labelPanel.add(new JLabel("Login to start chatting") );
+		JPanel errorPanel = new JPanel();
+		loginErrorLabel = new JLabel("Error");
+		loginErrorLabel.setForeground(Color.red);
+		errorPanel.add(loginErrorLabel);
+		loginErrorLabel.setVisible(false);
 		panel.add(labelPanel);
+		panel.add(errorPanel);
 		panel.add(Box.createRigidArea(new Dimension(0,50)));
 		JPanel usernamePanel = new JPanel(new GridLayout(0,1));
 		usernamePanel.setMaximumSize(new Dimension(200,100));
 		//usernamePanel.add(new JLabel("Username:"));
 		usernamePanel.add(loginBox);
 		usernamePanel.add(Box.createRigidArea(new Dimension(0,3)));
+		passwordBox.setEnabled(false);
 		usernamePanel.add(passwordBox);
 		panel.add(usernamePanel);
 		panel.add(Box.createRigidArea(new Dimension(0,10)));
@@ -500,6 +533,15 @@ class ChatterClient extends JFrame{
 		advancedButton.setVisible(false);
 		cardsPanel.add(loginScreen, LOGIN_SCREEN);
 	}
+	private void showLoginError(String m){
+		loginErrorLabel.setText(m);
+		loginErrorLabel.setVisible(true);
+		revalidate();
+	}
+	private void hideLoginError(){
+		loginErrorLabel.setVisible(false);
+		revalidate();
+	}
 	private void resetAdvancedOptions(){
 		serverBox.setText(DEFAULT_HOST + "");
 		portBox.setText(DEFAULT_PORT + "");
@@ -539,7 +581,7 @@ class ChatterClient extends JFrame{
         }
         return true;
     }
-	private void sendMessage(){
+	private void send(){
 		String s = messageBox.getText().trim();
 		if(!s.equals("")){
 			int len = s.length();
@@ -551,12 +593,16 @@ class ChatterClient extends JFrame{
 					display("No help for you!");
 					cmd = true;
 				}
-				if(s.substring(2).equalsIgnoreCase("whoisin")){
-					sendMessage(new ChatMessage(ChatMessage.Type.WHOISIN, ""));
+				else if(s.substring(2).equalsIgnoreCase("whoisin")){
+					sendMessage(".whoisin");
 					cmd = true;
 				}
-				if(s.substring(2).equalsIgnoreCase("logout")){
+				else if(s.substring(2).equalsIgnoreCase("logout")){
 					logout();
+					cmd = true;
+				}
+				else if(s.substring(2).equalsIgnoreCase("clear")){
+					clearChat();
 					cmd = true;
 				}
 				
@@ -567,13 +613,14 @@ class ChatterClient extends JFrame{
 			}
 			
 			else{
-				sendMessage(new ChatMessage(ChatMessage.Type.MESSAGE, s));		
+				sendMessage(s);		
 			}	
 			messageBox.setText("");
 		}
 		
 	}
 	private void login(){
+		hideLoginError();
 		username = loginBox.getText().trim();
 		if(username.equals("") || username == null){
 			JOptionPane.showMessageDialog(null, "Invalid username");
@@ -590,24 +637,29 @@ class ChatterClient extends JFrame{
 		}		
 		if(!start()){
 			disconnect();
-			connectionFailed();
 			return;
 		}
 		switchView(1);
 		loggedIn = true;
+		taskbar.login(true);
 		setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
 		logoutMenu.setEnabled(true);
 		messageBox.requestFocusInWindow();
 	}
 	public void logout(){
-		switchView(0);
-		sendMessage(new ChatMessage(ChatMessage.Type.LOGOUT, ""));
+		loggedIn = false;
+		out.println(1 + "");
+		taskbar.login(false);
+		clearChat();
 		disconnect();
+		switchView(0);
+		hideLoginError();
 		logoutMenu.setEnabled(false);
 		loggedIn = false;
 		loginBox.requestFocusInWindow();
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 	}
+
 	private void createChatScreen(){
 		chatScreen = new JPanel();
 		chatScreen.setBackground(Color.white);
@@ -637,13 +689,13 @@ class ChatterClient extends JFrame{
 		messageBox.setPreferredSize(new Dimension(200,30));
 		messageBox.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent e){
-				sendMessage();
+				send();
 			}
 		});
 		sendButton = new JButton("Send");
 		sendButton.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent e){
-				sendMessage();
+				send();
 			}
 		});
 		JPanel panel = new JPanel();
@@ -662,7 +714,7 @@ class ChatterClient extends JFrame{
 			if(len == 1 && s.substring(0,1).equals(".")) s = "";
 			if(len >= 2 && s.substring(0,2).equals("./")) s = "";
 			isTyping = !s.equals("");
-			sendMessage(new ChatMessage(ChatMessage.Type.TYPING,isTyping, s, username));	
+			//sendMessage(new ChatMessage(ChatMessage.Type.TYPING,isTyping, s, username));	
 		}
 		
 	}
@@ -674,12 +726,8 @@ class ChatterClient extends JFrame{
         window.setSize(new Dimension(500,600));
         window.pack();
         window.setVisible(true);
-        /*
-		 * server isn't accessible
-		 */
-		if(!isInternetReachable()){
-			JOptionPane.showMessageDialog(window, "Unable to connect to server.\n1. check your internet connection\n2. visit vizbits.net to see if server is available");
-		}
+
+
     }
 	private void switchView(int screen){
 		CardLayout cl = (CardLayout)(cardsPanel.getLayout());
