@@ -50,6 +50,8 @@ import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.Document;
 
 import options.Options;
 import options.OptionsPanel;
@@ -307,49 +309,29 @@ class ChatterClient extends JFrame{
 	 * if we have a GUI or simply System.out.println() it in console mode
 	 */
 	class ListenFromServer extends Thread {
-
+		
 		public void run() {
 			while(true) {
 				try {
-						String line = in.readLine();
-						if(line != null){
-							switch(line.charAt(0)){
-								case '0': // message
-									display(line.substring(1));
-									break;
-								case '2': // istyping
-									if(line.charAt(1) == '0') isTypingLabel.setText(" ");
-									else isTypingLabel.setText(line.substring(2));
-									
-									break;
-								case 'E': // Error
-									display(line.substring(1));
-									break;
-								default:
-									display("  Error:\n " + line);
-									break;
-							}
+					String line = in.readLine();
+					if(line != null){
+						switch(line.charAt(0)){
+						case '0': // message
+							display(line.substring(1));
+							break;
+						case '2': // istyping
+							if(line.charAt(1) == '0') isTypingLabel.setText(" ");
+							else isTypingLabel.setText(line.substring(2));
+							
+							break;
+						case 'E': // Error
+							display(line.substring(1));
+							break;
+						default:
+							display("  Error:\n " + line);
+							break;
 						}
-					
-					/*
-					ChatMessage message = (ChatMessage)sInput.readObject();
-					switch(message.getType()){
-						case MESSAGE:
-							display(message.getMessage());
-							break;
-						case TYPING:
-							if(message.getTyping()){
-								isTypingLabel.setText(message.getFrom() + ": " + message.getMessage());
-							}
-							else{
-								isTypingLabel.setText("");
-							}
-							break;
-					default:
-						break;
-					
 					}
-					*/
 				}
 				catch(IOException e) {
 					System.err.println("Server has close the connection: " + e);
@@ -634,7 +616,6 @@ class ChatterClient extends JFrame{
 				}
 				
 			}
-			
 			else{
 				sendMessage(s);		
 			}	
@@ -700,12 +681,29 @@ class ChatterClient extends JFrame{
 			}
 
 			@Override
-			public void insertUpdate(DocumentEvent arg0) {
-				isTyping();
+			public void insertUpdate(DocumentEvent e) {
+				Document d = e.getDocument();
+				try {
+					if(d.getLength() == 1 || d.getText(d.getLength() - 1, 1).equals(" ")){
+						isTyping();
+					}
+				} catch (BadLocationException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
 			}
 			@Override
-			public void removeUpdate(DocumentEvent arg0) {
-				isTyping();
+			public void removeUpdate(DocumentEvent e) {
+				Document d = e.getDocument();
+				
+				try {
+					if(d.getLength() == 0 || d.getText(d.getLength() - 1, 1).equals(" ")){
+						isTyping();
+					}
+				} catch (BadLocationException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
 			}
 		});
 		messageBox.setMinimumSize(new Dimension(100,20));
