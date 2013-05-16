@@ -75,7 +75,7 @@ class ChatterClient extends JFrame{
 	private static final String CHAT_SCREEN = "Chat";
 	public static final String DEFAULT_HOST = "vizbits.net";
 	private static final int DEFAULT_PORT = 1500;
-	private String username;
+	private String username, oldRealtime;
 	private int port;
 	private String hostname;
 	private Options options = new Options();
@@ -309,7 +309,6 @@ class ChatterClient extends JFrame{
 	 * if we have a GUI or simply System.out.println() it in console mode
 	 */
 	class ListenFromServer extends Thread {
-		
 		public void run() {
 			while(true) {
 				try {
@@ -403,6 +402,26 @@ class ChatterClient extends JFrame{
 	}
 	public void showAboutWindow(){
 		new AboutWindow(this);
+	}
+	public static String fauxDiff(String a, String b){
+		String similar = "";
+		if(a == null || b == null) return null;
+		if(a.equals(b)) return "0";
+		int len = Math.min(a.length(), b.length());
+		for(int i = 0; i < len; i++){
+			if(a.charAt(i) == b.charAt(i)){
+				similar += a.charAt(i);
+				continue;
+			}
+			break;
+		}
+		if(a.equals(similar)){
+			similar = "+" + b.substring(a.length());
+		}
+		else{
+			similar = "-" + a.substring(similar.length()).length();
+		}
+		return similar;
 	}
 	public void exit(){
 		if(loggedIn){
@@ -676,34 +695,31 @@ class ChatterClient extends JFrame{
 		scrollingChatPanel.setPreferredSize(new Dimension(300,200));
 		messageBox = new JTextField("");
 		messageBox.getDocument().addDocumentListener(new DocumentListener(){
+			boolean toggle = true;
+			
 			@Override
-			public void changedUpdate(DocumentEvent arg0) {
-			}
+			public void changedUpdate(DocumentEvent e) {}
 
 			@Override
 			public void insertUpdate(DocumentEvent e) {
-				Document d = e.getDocument();
-				try {
-					if(d.getLength() == 1 || d.getText(d.getLength() - 1, 1).equals(" ")){
-						isTyping();
-					}
-				} catch (BadLocationException e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
+				isTyping();
+/* send every other char, works but is unnatural
+				if(toggle){
+					isTyping();
 				}
+				toggle = !toggle;
+				*/
+				
 			}
 			@Override
 			public void removeUpdate(DocumentEvent e) {
-				Document d = e.getDocument();
-				
-				try {
-					if(d.getLength() == 0 || d.getText(d.getLength() - 1, 1).equals(" ")){
-						isTyping();
-					}
-				} catch (BadLocationException e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
+				isTyping();
+/* send every other char
+				if(toggle){
+					isTyping();
 				}
+				toggle = !toggle;
+				*/
 			}
 		});
 		messageBox.setMinimumSize(new Dimension(100,20));
@@ -735,8 +751,11 @@ class ChatterClient extends JFrame{
 			if(len == 1 && s.substring(0,1).equals(".")) s = "";
 			if(len >= 2 && s.substring(0,2).equals("./")) s = "";
 			isTyping = !s.equals("");
-			if(realtime) send('2',booleanToBit(isTyping) + s);
+			if(realtime){
+				send('2',booleanToBit(isTyping) + fauxDiff(oldRealtime, s));
+			}
 			else send('2',booleanToBit(isTyping) + "");
+			oldRealtime = s;
 		}
 		
 	}
