@@ -4,6 +4,8 @@ import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.FontFormatException;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -43,6 +45,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPasswordField;
 import javax.swing.JScrollPane;
+import javax.swing.JSplitPane;
 import javax.swing.JTextField;
 import javax.swing.KeyStroke;
 import javax.swing.UIManager;
@@ -50,8 +53,6 @@ import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-import javax.swing.text.BadLocationException;
-import javax.swing.text.Document;
 
 import options.Options;
 import options.OptionsPanel;
@@ -66,6 +67,7 @@ class ChatterClient extends JFrame{
 	private JTextField loginBox, messageBox, serverBox, portBox;
 	private JPasswordField passwordBox;
 	private File file;
+	private ContactList contactsList;
 	private JLabel isTypingLabel, loginErrorLabel;
 	private JButton loginButton, advancedButton, sendButton, resetAdvancedButton;
 	private StyledTextPane chatArea;
@@ -87,11 +89,15 @@ class ChatterClient extends JFrame{
 	private BufferedReader in;		// to write on the socket
 	private Socket socket;
 	private NotificationManager notifier;
-	// TODO: remove icon from taskbar at close
-	// TODO: logout
-	// TODO: redo all message sending operations
-	// TODO: login validation check
-	
+	/*
+	 * bugs to fix: 
+	 * threads don't synchro connectionslist
+	 * slow sending/receieving
+	 * error with username in use when it isnt
+	 * contacts list
+	 * ui
+	 * validate login for illegal chars
+	 */
 	
 	
 		//constructor
@@ -323,6 +329,10 @@ class ChatterClient extends JFrame{
 							else isTypingLabel.setText(line.substring(2));
 							
 							break;
+						case 'c': //contacts list
+							contactsList.update(line.substring(1).split(","));
+							break;
+							
 						case 'E': // Error
 							display(line.substring(1));
 							break;
@@ -684,19 +694,27 @@ class ChatterClient extends JFrame{
 	}
 
 	private void createChatScreen(){
+		GridBagConstraints c = new GridBagConstraints();
+		GridBagLayout grid = new GridBagLayout();
+		
+		contactsList = new ContactList();
+		contactsList.setMinimumSize(new Dimension(50,200));
+		chatArea = new StyledTextPane();
+		JScrollPane scrollingChatPanel = new JScrollPane(chatArea);
+//		/scrollingChatPanel.setPreferredSize(new Dimension(300,200));
+		scrollingChatPanel.setMinimumSize(new Dimension(250,200));
+		JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, contactsList, scrollingChatPanel);
+		splitPane.setOneTouchExpandable(true);
+		splitPane.setMinimumSize(new Dimension(300,200));
+		//splitPane.setDividerLocation(150);
 		chatScreen = new JPanel();
-		chatScreen.setBackground(Color.white);
-		chatScreen.setLayout(new BoxLayout(chatScreen, BoxLayout.PAGE_AXIS));
+		chatScreen.setLayout(grid);
 		isTypingLabel = new JLabel(" ");
 		file = new File("media/background.png");
-		chatArea = new StyledTextPane();
 		//chatArea.setLineWrap(true);
-		JScrollPane scrollingChatPanel = new JScrollPane(chatArea);
 		scrollingChatPanel.setPreferredSize(new Dimension(300,200));
 		messageBox = new JTextField("");
 		messageBox.getDocument().addDocumentListener(new DocumentListener(){
-			boolean toggle = true;
-			
 			@Override
 			public void changedUpdate(DocumentEvent e) {}
 
@@ -722,7 +740,7 @@ class ChatterClient extends JFrame{
 				*/
 			}
 		});
-		messageBox.setMinimumSize(new Dimension(100,20));
+		messageBox.setMinimumSize(new Dimension(200,20));
 		messageBox.setPreferredSize(new Dimension(200,30));
 		messageBox.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent e){
@@ -738,10 +756,20 @@ class ChatterClient extends JFrame{
 		JPanel panel = new JPanel();
 		panel.add(messageBox);
 		panel.add(sendButton);
-		chatScreen.add(scrollingChatPanel);
-		chatScreen.add(isTypingLabel);
-		chatScreen.add(panel);
-		
+		c.fill = GridBagConstraints.BOTH;
+		c.weighty = 1.0;   //request any extra vertical space
+		c.weightx = 1.0;   //request any extra hor. space
+		c.anchor = GridBagConstraints.PAGE_START;
+		c.gridy = 0;
+		c.ipady = 60; 
+		chatScreen.add(splitPane,c);
+		c.anchor = GridBagConstraints.CENTER;
+		c.weighty = 0;
+		c.ipady = 0; 
+		c.gridy++;
+		chatScreen.add(isTypingLabel,c);
+		c.gridy++;
+		chatScreen.add(panel,c);
 		cardsPanel.add(chatScreen, CHAT_SCREEN);
 	}
 	private void isTyping(){
