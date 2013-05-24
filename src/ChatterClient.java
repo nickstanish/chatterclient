@@ -678,9 +678,15 @@ class ChatterClient extends JFrame{
 		setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
 		logoutMenu.setEnabled(true);
 		messageBox.requestFocusInWindow();
+		contactsList.startPolling();
+		
+	}
+	public void requestContacts(){
+		send('c', "");
 	}
 	public void logout(){
 		loggedIn = false;
+		contactsList.kill();
 		out.println(1 + "");
 		taskbar.login(false);
 		clearChat();
@@ -697,7 +703,7 @@ class ChatterClient extends JFrame{
 		GridBagConstraints c = new GridBagConstraints();
 		GridBagLayout grid = new GridBagLayout();
 		
-		contactsList = new ContactList();
+		contactsList = new ContactList(this);
 		contactsList.setMinimumSize(new Dimension(50,200));
 		chatArea = new StyledTextPane();
 		JScrollPane scrollingChatPanel = new JScrollPane(chatArea);
