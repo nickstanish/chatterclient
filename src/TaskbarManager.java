@@ -35,7 +35,7 @@ public class TaskbarManager {
 			try{
 				//message_box_icon
 				BufferedImage original = ImageIO.read(new File("media/icons/logo.png"));
-				image = resize(original, 20,20);
+				image = resize(original, 16,16);
 			}
 			catch(IOException ie){
 				System.err.println("error: " + ie);
@@ -97,10 +97,10 @@ public class TaskbarManager {
 	public void login(boolean b){
 		logoutTrayItem.setEnabled(b);
 	}
-	public BufferedImage resize(BufferedImage original, int width, int height){
+	public static BufferedImage resize(BufferedImage original, int width, int height){
 		BufferedImage image = new BufferedImage(width,height,BufferedImage.TYPE_INT_ARGB);
 		Graphics2D g = image.createGraphics();
-		g.drawImage(original, 0, 0, 16, 16, null);
+		g.drawImage(original, 0, 0, width, height, null);
 		g.dispose();
 		g.setComposite(AlphaComposite.Src);
 		g.setRenderingHint(RenderingHints.KEY_INTERPOLATION,RenderingHints.VALUE_INTERPOLATION_BILINEAR);

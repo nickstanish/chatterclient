@@ -15,16 +15,12 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
-import java.io.PrintWriter;
 import java.net.HttpURLConnection;
-import java.net.Socket;
 import java.net.SocketException;
 import java.net.URL;
 import java.net.UnknownHostException;
@@ -54,40 +50,44 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
+import network.Client;
+import network.UsernameTakenException;
 import options.Options;
 import options.OptionsPanel;
 import style.StyledTextPane;
 
-class ChatterClient extends JFrame{
+class ChatterClient extends Client{
 	/**
-	 *
+	 * GUI based client for vizbits chatterbox instant messenger
+	 * Use JDK and JRE 7!
+	 * @author: Nick Stanish
+	 * @author: Joey Imburgia
 	 */
 	private static final long serialVersionUID = -7269347532987537692L;
+	private JFrame window;
 	private JPanel mainPanel, topPanel, bottomPanel,cardsPanel, loginScreen, chatScreen, advancedPanel;
 	private JTextField loginBox, messageBox, serverBox, portBox;
 	private JPasswordField passwordBox;
-	private File file;
 	private ContactList contactsList;
 	private JLabel isTypingLabel, loginErrorLabel;
 	private JButton loginButton, advancedButton, sendButton, resetAdvancedButton;
 	private StyledTextPane chatArea;
-	private boolean loggedIn = false, realtime = false;
+	private boolean loggedIn = false, realtime = false, isTyping = false, focused;
 	private JMenuItem logoutMenu;
+	/*
+	 * properties
+	 */
 	private static final String LOGIN_SCREEN = "Login";
 	private static final String CHAT_SCREEN = "Chat";
 	public static final String DEFAULT_HOST = "vizbits.net";
 	private static final int DEFAULT_PORT = 1500;
+	
+	private String host = DEFAULT_HOST;
+	private int port = DEFAULT_PORT;
 	private String username, oldRealtime;
-	private int port;
-	private String hostname;
 	private Options options = new Options();
-	private boolean isTyping = false;
-	private boolean focused; //used to check if window has focus
 	private TaskbarManager taskbar;
-	// for I/O
-	private PrintWriter out;		// to read from the socket
-	private BufferedReader in;		// to write on the socket
-	private Socket socket;
+
 	private NotificationManager notifier;
 	/*
 	 * bugs to fix: 
@@ -101,16 +101,19 @@ class ChatterClient extends JFrame{
 	
 	
 		//constructor
-	public ChatterClient(String hostname, int portnumber){
-
+	public ChatterClient(String host, int port){
+		super();
+		this.host = host;
+		this.port = port;
+		window = new JFrame();
 		loadOptions();
 		taskbar = new TaskbarManager(this);
 		notifier = new NotificationManager(this);
-		Container contentPane = getContentPane();
+		Container contentPane = window.getContentPane();
 		mainPanel = new JPanel();
-		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		createMenu();
-		setMinimumSize(new Dimension(300,500));
+		window.setMinimumSize(new Dimension(300,500));
 		//font
 		Font font1 = new Font("sansserif", Font.BOLD, 48);
 		Font font;
@@ -144,7 +147,7 @@ class ChatterClient extends JFrame{
 		contentPane.add(mainPanel);
 		loginBox.requestFocusInWindow();
 		
-		addWindowFocusListener(new WindowAdapter(){
+		window.addWindowFocusListener(new WindowAdapter(){
 			public void windowLostFocus(WindowEvent e){
 				changeFocus(false);
 			}
@@ -167,6 +170,10 @@ class ChatterClient extends JFrame{
 			}
 		};
 		mainPanel.getActionMap().put( "advanced", advancedAction );
+		window.setTitle("ChatterBox");
+        window.setSize(new Dimension(500,600));
+        window.pack();
+        window.setVisible(true);
 		if(!isInternetReachable()){
 			showLoginError("Default server not available");
 		}
@@ -188,8 +195,8 @@ class ChatterClient extends JFrame{
 		focused = x;
 	}
 	public void bringToFront(){
-		setVisible(true);
-		setState(JFrame.NORMAL);
+		window.setVisible(true);
+		window.setState(JFrame.NORMAL);
 		if(loggedIn){
 			messageBox.requestFocusInWindow();
 		}
@@ -198,55 +205,22 @@ class ChatterClient extends JFrame{
 		}
 		
 	}
-	public boolean start() {
-		// try to connect to the server
-		try {
-			socket = new Socket(hostname, port);
-		} 
-		catch(Exception ec) {
-			connectionFailed();
-			System.err.println("Error connecting to server:" + ec.getLocalizedMessage());
-			//TODO: change show display on login screen
-			return false;
-		}
-		try{
-			socket.setKeepAlive(true);
-		}
-		catch(SocketException e){
-			System.err.println(e);
-			connectionFailed();
-			System.err.println("Unable to set keepalive true");
-		}
-		/* Creating both Data Stream */
-		try{
-			in  = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-			out = new PrintWriter(socket.getOutputStream(), true);
-		}
-		catch (IOException eIO) {
-			connectionFailed();
-			System.err.println("Exception creating new Input/output Streams: " + eIO);
-			return false;
-		}
-		// creates the Thread to listen from the server 
+	/**
+	 * connects to the server
+	 * @return true on success
+	 */
+	public boolean start(String _username, String _host, int _port) {
 		
-		// Send our username to the server this is the only message that we
-		// will send as a String. All other messages will be ChatMessage objects
-		out.println(username);
+		hideLoginError();
 		try {
-			String validation = in.readLine();
-			if(validation.charAt(0) == '0'){
-				showLoginError("Username taken");
-				return false;
+			return connect(_username, _host, _port);
+		} catch ( IOException | UsernameTakenException e) {
+			if(e instanceof UsernameTakenException){
+				showLoginError("Username taken.");
 			}
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
-			connectionFailed();
 			return false;
 		}
-		new ListenFromServer().start();
-		// success we inform the caller that it worked
-		return true;
 	}
 
 	/*
@@ -263,7 +237,7 @@ class ChatterClient extends JFrame{
 		 * seems like the best way to implement notifications for now
 		 */
 		//SystemTray.isSupported() for tray
-		if(this.getState() == JFrame.ICONIFIED || !this.isVisible() || !focused){
+		if(window.getState() == JFrame.ICONIFIED || !window.isVisible() || !focused){
 			//trayIcon.displayMessage("New ChatterBox Message", "Yeah you got a message...", TrayIcon.MessageType.NONE);
 			notifier.notify("ChatterBox: ", "New Message");
 			//System.out.println("should have gotten a notification around now");
@@ -278,80 +252,20 @@ class ChatterClient extends JFrame{
 	/**
 	 * To send a string to the server to be broadcasted
 	 */
-	void sendMessage(String s) {
-		send('0', s);
-	}
-	/*
-	 * When something goes wrong
-	 * Close the Input/Output streams and disconnect not much to do in the catch clause
-	 */
-	private void disconnect() {
-		try{
-			if(socket != null) socket.setKeepAlive(false);
-		}
-		catch(SocketException e){
-			System.err.println(e);
-			System.err.println("Unable to set keepalive false");
-		}
-		try { 
-			if(in != null) in.close();
-		}
-		catch(Exception e) {} // not much else I can do
+	private void sendMessage(String s) {
 		try {
-			if(out != null) out.close();
+			send('0', s);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
-		catch(Exception e) {} // not much else I can do
-        try{
-			if(socket != null) socket.close();
-		}
-		catch(Exception e) {} // not much else I can do
-			
 	}
-	private void connectionFailed() {
-		showLoginError("Connection Failed");
-	}
-	/*
-	 * a class that waits for the message from the server and append them to the JTextArea
-	 * if we have a GUI or simply System.out.println() it in console mode
-	 */
-	class ListenFromServer extends Thread {
-		public void run() {
-			while(true) {
-				try {
-					String line = in.readLine();
-					if(line != null){
-						switch(line.charAt(0)){
-						case '0': // message
-							display(line.substring(1));
-							break;
-						case '2': // istyping
-							if(line.charAt(1) == '0') isTypingLabel.setText(" ");
-							else isTypingLabel.setText(line.substring(2));
-							
-							break;
-						case 'c': //contacts list
-							contactsList.update(line.substring(1).split(","));
-							break;
-							
-						case 'E': // Error
-							display(line.substring(1));
-							break;
-						default:
-							display("  Error:\n " + line);
-							break;
-						}
-					}
-				}
-				catch(IOException e) {
+					/*
 					System.err.println("Server has close the connection: " + e);
 					showLoginError("Server closed connection");
 					switchView(0);
 					break;
-				}
-				// can't happen with a String object but need the catch anyhow
-			}
-		}
-	}
+					*/
 	
 
 	/**
@@ -365,7 +279,7 @@ class ChatterClient extends JFrame{
 		// TODO: pretty much done, optimize at bottom
 		// Maybe refresh fields if any
 		OptionsPanel optionsPanel = new OptionsPanel(options);
-		int answer = JOptionPane.showConfirmDialog(this, optionsPanel, "Options", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);  
+		int answer = JOptionPane.showConfirmDialog(window, optionsPanel, "Options", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);  
 		if (answer == JOptionPane.OK_OPTION){
 			optionsPanel.saveOptions();
 			loadOptions();
@@ -408,10 +322,10 @@ class ChatterClient extends JFrame{
 		filemenu.add(exitMenu);
 		menubar.add(filemenu);
 		menubar.add(helpmenu);
-		setJMenuBar(menubar);
+		window.setJMenuBar(menubar);
 	}
 	public void showAboutWindow(){
-		new AboutWindow(this);
+		new AboutWindow(window);
 	}
 	public static String fauxDiff(String a, String b){
 		String similar = "";
@@ -438,7 +352,7 @@ class ChatterClient extends JFrame{
 			logout();
 		}
 		taskbar.kill();
-		dispose();
+		window.dispose();
 		System.exit(0);
 	}
 	private void createLoginScreen(){
@@ -565,11 +479,11 @@ class ChatterClient extends JFrame{
 	private void showLoginError(String m){
 		loginErrorLabel.setText(m);
 		loginErrorLabel.setVisible(true);
-		revalidate();
+		window.revalidate();
 	}
 	private void hideLoginError(){
 		loginErrorLabel.setVisible(false);
-		revalidate();
+		window.revalidate();
 	}
 	private void resetAdvancedOptions(){
 		serverBox.setText(DEFAULT_HOST + "");
@@ -623,7 +537,12 @@ class ChatterClient extends JFrame{
 					cmd = true;
 				}
 				else if(s.substring(2).equalsIgnoreCase("whoisin")){
-					send('4', ".whoisin");
+					try {
+						send('4', ".whoisin");
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
 					cmd = true;
 				}
 				else if(s.substring(2).equalsIgnoreCase("logout")){
@@ -636,7 +555,12 @@ class ChatterClient extends JFrame{
 				}
 				else if(s.substring(2).equalsIgnoreCase("realtime")){
 					realtime = !realtime; // toggle realtime on/off
-					send('3', booleanToBit(realtime) + "" );
+					try {
+						send('3', booleanToBit(realtime) + "" );
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
 					cmd = true;
 				}
 				
@@ -662,32 +586,36 @@ class ChatterClient extends JFrame{
 		}
 		if (advancedButton.getText().equalsIgnoreCase("Hide Advanced")){
 			port = Integer.valueOf(portBox.getText());
-			hostname = serverBox.getText();
+			host = serverBox.getText();
 		}
 		else{
 			port = DEFAULT_PORT;
-			hostname = DEFAULT_HOST;
+			host = DEFAULT_HOST;
 		}		
-		if(!start()){
+		if(!start(username, host, port)){
 			disconnect();
 			return;
 		}
 		switchView(1);
 		loggedIn = true;
 		taskbar.login(true);
-		setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+		window.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
 		logoutMenu.setEnabled(true);
 		messageBox.requestFocusInWindow();
 		contactsList.startPolling();
 		
 	}
 	public void requestContacts(){
-		send('c', "");
+		try {
+			send('c', "");
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	public void logout(){
 		loggedIn = false;
 		contactsList.kill();
-		out.println(1 + "");
 		taskbar.login(false);
 		clearChat();
 		disconnect();
@@ -695,7 +623,7 @@ class ChatterClient extends JFrame{
 		logoutMenu.setEnabled(false);
 		loggedIn = false;
 		loginBox.requestFocusInWindow();
-		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		hideLoginError();
 	}
 
@@ -704,19 +632,19 @@ class ChatterClient extends JFrame{
 		GridBagLayout grid = new GridBagLayout();
 		
 		contactsList = new ContactList(this);
-		contactsList.setMinimumSize(new Dimension(50,200));
+		contactsList.setMinimumSize(new Dimension(200,200));
 		chatArea = new StyledTextPane();
 		JScrollPane scrollingChatPanel = new JScrollPane(chatArea);
 //		/scrollingChatPanel.setPreferredSize(new Dimension(300,200));
 		scrollingChatPanel.setMinimumSize(new Dimension(250,200));
 		JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, contactsList, scrollingChatPanel);
 		splitPane.setOneTouchExpandable(true);
-		splitPane.setMinimumSize(new Dimension(300,200));
+		splitPane.setMinimumSize(new Dimension(400,200));
 		//splitPane.setDividerLocation(150);
 		chatScreen = new JPanel();
 		chatScreen.setLayout(grid);
 		isTypingLabel = new JLabel(" ");
-		file = new File("media/background.png");
+		//file = new File("media/background.png");
 		//chatArea.setLineWrap(true);
 		scrollingChatPanel.setPreferredSize(new Dimension(300,200));
 		messageBox = new JTextField("");
@@ -786,9 +714,19 @@ class ChatterClient extends JFrame{
 			if(len >= 2 && s.substring(0,2).equals("./")) s = "";
 			isTyping = !s.equals("");
 			if(realtime){
-				send('2',booleanToBit(isTyping) + fauxDiff(oldRealtime, s));
-			}
-			else send('2',booleanToBit(isTyping) + "");
+				try {
+					send('2',booleanToBit(isTyping) + fauxDiff(oldRealtime, s));
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			} else
+				try {
+					send('2',booleanToBit(isTyping) + "");
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 			oldRealtime = s;
 		}
 		
@@ -797,19 +735,12 @@ class ChatterClient extends JFrame{
 		if(b) return '1';
 		else return '0';
 	}
-	private void send(char code, String s){
-		out.println(code + s);
+	public static boolean bitToBoolean(char c){
+		return (c != '0');
 	}
 	private static void createAndShowGUI() {
         // Create and set up the window.
-		// Avoid statics
-        ChatterClient window = new ChatterClient("ChatterClient.DEFAULT_HOST", 1500);
-        window.setTitle("ChatterBox");
-        window.setSize(new Dimension(500,600));
-        window.pack();
-        window.setVisible(true);
-
-
+        ChatterClient client = new ChatterClient("ChatterClient.DEFAULT_HOST", 1500);
     }
 	private void switchView(int screen){
 		CardLayout cl = (CardLayout)(cardsPanel.getLayout());
@@ -871,5 +802,33 @@ class ChatterClient extends JFrame{
 			System.err.println(e);
 		}
 		options = new Options();
+	}
+	@Override
+	public void messageHandler(MessageType type, Object s) {
+		System.out.print(type.name());
+		switch(type){
+		case CONTACTS:
+			contactsList.update((String[])s);
+			break;
+		case ERROR:
+			display((String)s);
+			break;
+		case DISCONNECTED: //contacts list
+			display((String)s);
+			break;
+		case MESSAGE:
+			display((String)s);
+			break;
+		case NOTICE:
+			display((String)s);
+			break;
+		case TYPING:
+			isTypingLabel.setText((String)s);
+			break;
+		default:
+			display("  Error:\n " + (String)s);
+			break;
+		}
+				
 	}
 }

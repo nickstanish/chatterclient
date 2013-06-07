@@ -1,9 +1,12 @@
 package network;
 
+import java.io.IOException;
+import java.net.SocketException;
+
 public interface Connection{
-	public boolean connect(String username);
+	public boolean connect(String username, String host, int port) throws IOException, UsernameTakenException;
 	public void disconnect();
-	public boolean send(int type, Object c);
+	public boolean send(char code, String s) throws IOException;
 	public boolean connected();
 	/**
 	 * recursively try to reconnect with a timeout
