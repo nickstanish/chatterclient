@@ -9,6 +9,8 @@ import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ComponentEvent;
+import java.awt.event.ComponentListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.InputEvent;
@@ -106,6 +108,27 @@ class ChatterClient extends Client{
 		this.host = host;
 		this.port = port;
 		window = new JFrame();
+		window.addComponentListener(new ComponentListener(){
+			@Override
+			public void componentShown(ComponentEvent e) {}
+			
+			@Override
+			public void componentResized(ComponentEvent e) {
+				if(contactsList != null && contactsList.getSnapped()){
+					contactsList.snap();
+				}
+			}
+			
+			@Override
+			public void componentMoved(ComponentEvent e) {
+				if(contactsList != null && contactsList.getSnapped()){
+					contactsList.snap();
+				}
+			}
+			
+			@Override
+			public void componentHidden(ComponentEvent e) {}
+		});
 		loadOptions();
 		taskbar = new TaskbarManager(this);
 		notifier = new NotificationManager(this);
@@ -285,6 +308,9 @@ class ChatterClient extends Client{
 			loadOptions();
 			} 
 		
+	}
+	public JFrame getFrame(){
+		return window;
 	}
 	private void createMenu(){
 		JMenuBar menubar = new JMenuBar();
@@ -632,15 +658,8 @@ class ChatterClient extends Client{
 		GridBagLayout grid = new GridBagLayout();
 		
 		contactsList = new ContactList(this);
-		contactsList.setMinimumSize(new Dimension(200,200));
 		chatArea = new StyledTextPane();
 		JScrollPane scrollingChatPanel = new JScrollPane(chatArea);
-//		/scrollingChatPanel.setPreferredSize(new Dimension(300,200));
-		scrollingChatPanel.setMinimumSize(new Dimension(250,200));
-		JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, contactsList, scrollingChatPanel);
-		splitPane.setOneTouchExpandable(true);
-		splitPane.setMinimumSize(new Dimension(400,200));
-		//splitPane.setDividerLocation(150);
 		chatScreen = new JPanel();
 		chatScreen.setLayout(grid);
 		isTypingLabel = new JLabel(" ");
@@ -651,7 +670,6 @@ class ChatterClient extends Client{
 		messageBox.getDocument().addDocumentListener(new DocumentListener(){
 			@Override
 			public void changedUpdate(DocumentEvent e) {}
-
 			@Override
 			public void insertUpdate(DocumentEvent e) {
 				isTyping();
@@ -696,7 +714,7 @@ class ChatterClient extends Client{
 		c.anchor = GridBagConstraints.PAGE_START;
 		c.gridy = 0;
 		c.ipady = 60; 
-		chatScreen.add(splitPane,c);
+		chatScreen.add(scrollingChatPanel,c);
 		c.anchor = GridBagConstraints.CENTER;
 		c.weighty = 0;
 		c.ipady = 0; 
@@ -740,7 +758,7 @@ class ChatterClient extends Client{
 	}
 	private static void createAndShowGUI() {
         // Create and set up the window.
-        ChatterClient client = new ChatterClient("ChatterClient.DEFAULT_HOST", 1500);
+        new ChatterClient("ChatterClient.DEFAULT_HOST", 1500);
     }
 	private void switchView(int screen){
 		CardLayout cl = (CardLayout)(cardsPanel.getLayout());
@@ -813,7 +831,7 @@ class ChatterClient extends Client{
 		case ERROR:
 			display((String)s);
 			break;
-		case DISCONNECTED: //contacts list
+		case DISCONNECTED:
 			display((String)s);
 			break;
 		case MESSAGE:

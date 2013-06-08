@@ -1,15 +1,16 @@
-import java.awt.Dimension;
+import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionAdapter;
 
 import javax.swing.DefaultListModel;
 import javax.swing.JFrame;
 import javax.swing.JList;
 import javax.swing.JMenuItem;
-import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
+import javax.swing.JWindow;
 import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
@@ -17,37 +18,57 @@ import javax.swing.event.ListSelectionListener;
 import contacts.Contact;
 import contacts.ContactsRenderer;
 
-public class ContactList extends JPanel implements ListSelectionListener, Runnable{
+public class ContactList extends JWindow implements ListSelectionListener, Runnable{
 	public DefaultListModel<Contact> model;
 	public ChatterClient client;
 	public JList<Contact> list;
+	private int x = 0, y = 0;
 	public JScrollPane scroller;
 	public int delay = 5;
+	private boolean snapped = true;
+	private boolean drag = false;
 	private boolean keepgoing = true;
 	JPopupMenu menu;
 	public ContactList(ChatterClient client) {
 		super();
+		this.setOpacity(0.9f);
 		this.client = client;
 		model = new DefaultListModel<Contact>();
 		list = new JList<Contact>(model);
 		list.setCellRenderer(new ContactsRenderer());
 		list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		scroller = new JScrollPane(list);
-		//list.setVisibleRowCount(12);
+		list.setVisibleRowCount(10);
 		scroller.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-		this.add(scroller);
+		this.getContentPane().add(scroller);
         list.addListSelectionListener(this);
         menu = new JPopupMenu();
         menu.add(new JMenuItem("Message"));
         list.setPrototypeCellValue(new Contact(null, "Index 1234567890")); 
+        list.addMouseMotionListener(new MouseMotionAdapter() {
+        	public void mouseDragged(MouseEvent e){
+        		snapped = false;
+        		drag = true;
+        		setLocation(getLocation().x + (e.getX() - x ) , getLocation().y + (e.getY() - y));
+        	}
+        });
         list.addMouseListener(new MouseAdapter() {
         	public void mousePressed(MouseEvent e)  {
+        		x = e.getX();
+        		y = e.getY();
         		if (e.getButton() == MouseEvent.BUTTON3) { //if the event shows the menu
         	        list.setSelectedIndex(list.locationToIndex(e.getPoint())); //select the item
         	        Rectangle r = list.getBounds();
         	        menu.show(list, r.x + r.width - menu.getWidth(), list.indexToLocation(list.getSelectedIndex()).y); //and show the menu
         	    }
         	}
+        	public void mouseReleased(MouseEvent e){
+        		if(drag){
+        			drag = false;
+        			checkSnap();
+        		}
+        	}
+        	
         	public void mouseClicked(MouseEvent e) {
                 if (e.getClickCount() == 2) {
                     int index = list.locationToIndex(e.getPoint());
@@ -55,9 +76,40 @@ public class ContactList extends JPanel implements ListSelectionListener, Runnab
                  }
             }
         });
+		this.pack();
+
+		this.setVisible(client == null);
+		this.setLocation(50, 50);
+		//this.setSize(new Dimension(100,100));
+	}
+	private boolean checkSnap() {
+		if(client != null){
+			JFrame w = client.getFrame();
+			Rectangle f = new Rectangle(w.getX(),w.getY(),w.getWidth(),w.getHeight());
+			Rectangle co = new Rectangle(getX(),getY(),getWidth(),getHeight());
+			if(f.intersects(co)){
+				snap();
+				return true;
+			}
+			
+		}
+		return false;
 	}
 	public void startPolling(){
 		new Thread(this).start();
+		setVisible(true);
+		if(client != null){
+			snap();
+		}
+		
+	}
+	public boolean getSnapped(){
+		return snapped;
+	}
+	public void snap(){
+		snapped = true;
+		JFrame w = client.getFrame();
+		setLocation(w.getX() + w.getWidth(),w.getY() + 50);
 	}
 	public void setDelay(int seconds){
 		delay = seconds;
@@ -72,8 +124,11 @@ public class ContactList extends JPanel implements ListSelectionListener, Runnab
 	public void run(){
 		while(keepgoing){
 			try {
-				client.requestContacts();
-				Thread.sleep(delay*1000);
+				if(client.connected()){
+					client.requestContacts();
+					Thread.sleep(delay*1000);
+				}
+				
 				} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -84,13 +139,7 @@ public class ContactList extends JPanel implements ListSelectionListener, Runnab
 		keepgoing = false;
 	}
 	public static void main(String[] args){
-		JFrame window = new JFrame("Contacts");
 		ContactList list = new ContactList(null);
-		window.getContentPane().add(list);
-		window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		window.pack();
-		window.setVisible(true);
-		window.setSize(new Dimension(100,100));
 		String[] s = {"Nick Stanish","Joe", "Jake","Marco Polo", "Tester_"};
 		list.update(s);
 	}

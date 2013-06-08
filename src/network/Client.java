@@ -109,6 +109,7 @@ public abstract class Client implements Connection, Runnable {
 	 */
 	@Override
 	public final void run(){
+		keepGoing = true;
 		while(keepGoing){
 			String line = null;
 			try {
