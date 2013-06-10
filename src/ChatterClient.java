@@ -298,6 +298,9 @@ class ChatterClient extends Client{
 	 * use methods to organize everything thats going on since most of it
 	 * initializing the GUI
 	 */
+	public static boolean validateChars(String s){
+		return s.matches("[A-Za-z0-9\\-\\_\\.\\s]+");
+	}
 	private void showOptions(){
 		// TODO: pretty much done, optimize at bottom
 		// Maybe refresh fields if any
@@ -606,7 +609,12 @@ class ChatterClient extends Client{
 		hideLoginError();
 		username = loginBox.getText().trim();
 		if(username.equals("") || username == null){
-			JOptionPane.showMessageDialog(null, "Invalid username");
+			showLoginError("You must enter a username.");
+			return;
+			
+		}
+		if(!validateChars(username)){
+			showLoginError("Username has illegal characters.");
 			return;
 			
 		}
