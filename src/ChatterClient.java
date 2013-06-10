@@ -2,6 +2,7 @@ import java.awt.CardLayout;
 import java.awt.Color;
 import java.awt.Container;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.FontFormatException;
 import java.awt.GridBagConstraints;
@@ -15,6 +16,7 @@ import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
@@ -23,14 +25,16 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.net.HttpURLConnection;
-import java.net.SocketException;
 import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.Arrays;
 
 import javax.swing.AbstractAction;
+import javax.swing.ActionMap;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
+import javax.swing.DropMode;
+import javax.swing.InputMap;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComponent;
@@ -43,7 +47,6 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPasswordField;
 import javax.swing.JScrollPane;
-import javax.swing.JSplitPane;
 import javax.swing.JTextField;
 import javax.swing.KeyStroke;
 import javax.swing.UIManager;
@@ -68,12 +71,12 @@ class ChatterClient extends Client{
 	private static final long serialVersionUID = -7269347532987537692L;
 	private JFrame window;
 	private JPanel mainPanel, topPanel, bottomPanel,cardsPanel, loginScreen, chatScreen, advancedPanel;
-	private JTextField loginBox, messageBox, serverBox, portBox;
+	private JTextField loginBox, serverBox, portBox;
 	private JPasswordField passwordBox;
 	private ContactList contactsList;
 	private JLabel isTypingLabel, loginErrorLabel;
 	private JButton loginButton, advancedButton, sendButton, resetAdvancedButton;
-	private StyledTextPane chatArea;
+	private StyledTextPane chatArea, sendMessagePane;
 	private boolean loggedIn = false, realtime = false, isTyping = false, focused;
 	private JMenuItem logoutMenu;
 	/*
@@ -221,7 +224,7 @@ class ChatterClient extends Client{
 		window.setVisible(true);
 		window.setState(JFrame.NORMAL);
 		if(loggedIn){
-			messageBox.requestFocusInWindow();
+			sendMessagePane.requestFocusInWindow();
 		}
 		else{
 			loginBox.requestFocusInWindow();
@@ -278,6 +281,7 @@ class ChatterClient extends Client{
 	private void sendMessage(String s) {
 		try {
 			send('0', s);
+			sendMessagePane.requestFocusInWindow();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -554,7 +558,7 @@ class ChatterClient extends Client{
         return true;
     }
 	private void send(){
-		String s = messageBox.getText().trim();
+		String s = sendMessagePane.getText().trim();
 		if(!s.equals("")){
 			int len = s.length();
 			if(len >= 2 && s.substring(0,2).equals("./")){
@@ -601,7 +605,7 @@ class ChatterClient extends Client{
 			else{
 				sendMessage(s);		
 			}	
-			messageBox.setText("");
+			sendMessagePane.setText("");
 		}
 		
 	}
@@ -635,7 +639,7 @@ class ChatterClient extends Client{
 		taskbar.login(true);
 		window.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
 		logoutMenu.setEnabled(true);
-		messageBox.requestFocusInWindow();
+		sendMessagePane.requestFocusInWindow();
 		contactsList.startPolling();
 		
 	}
@@ -668,14 +672,33 @@ class ChatterClient extends Client{
 		contactsList = new ContactList(this);
 		chatArea = new StyledTextPane();
 		JScrollPane scrollingChatPanel = new JScrollPane(chatArea);
+		scrollingChatPanel.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 		chatScreen = new JPanel();
 		chatScreen.setLayout(grid);
+		JPanel isTypingPanel = new JPanel(new FlowLayout(FlowLayout.LEADING));
 		isTypingLabel = new JLabel(" ");
+		isTypingPanel.add(isTypingLabel);
 		//file = new File("media/background.png");
 		//chatArea.setLineWrap(true);
 		scrollingChatPanel.setPreferredSize(new Dimension(300,200));
-		messageBox = new JTextField("");
-		messageBox.getDocument().addDocumentListener(new DocumentListener(){
+		sendMessagePane = new StyledTextPane();
+		sendMessagePane.setAutoscrolls(true);
+		sendMessagePane.setEditable(true);
+		sendMessagePane.setDragEnabled(true);
+		sendMessagePane.setDropMode(DropMode.INSERT);
+		JScrollPane sendMessageScroller = new JScrollPane(sendMessagePane);
+		sendMessageScroller.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+		InputMap input = sendMessagePane.getInputMap();
+		KeyStroke enter = KeyStroke.getKeyStroke("ENTER");
+		input.put(enter, "sendmessage");
+		ActionMap actions = sendMessagePane.getActionMap();
+		actions.put("sendmessage", new AbstractAction() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				send();
+				}
+			});
+		sendMessagePane.getDocument().addDocumentListener(new DocumentListener(){
 			@Override
 			public void changedUpdate(DocumentEvent e) {}
 			@Override
@@ -700,21 +723,13 @@ class ChatterClient extends Client{
 				*/
 			}
 		});
-		messageBox.setMinimumSize(new Dimension(200,20));
-		messageBox.setPreferredSize(new Dimension(200,30));
-		messageBox.addActionListener(new ActionListener(){
-			public void actionPerformed(ActionEvent e){
-				send();
-			}
-		});
 		sendButton = new JButton("Send");
 		sendButton.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent e){
 				send();
 			}
 		});
-		JPanel panel = new JPanel();
-		panel.add(messageBox);
+		JPanel panel = new JPanel(new FlowLayout(FlowLayout.TRAILING));
 		panel.add(sendButton);
 		c.fill = GridBagConstraints.BOTH;
 		c.weighty = 1.0;   //request any extra vertical space
@@ -727,14 +742,16 @@ class ChatterClient extends Client{
 		c.weighty = 0;
 		c.ipady = 0; 
 		c.gridy++;
-		chatScreen.add(isTypingLabel,c);
+		chatScreen.add(isTypingPanel,c);
+		c.gridy++;
+		chatScreen.add(sendMessageScroller,c);
 		c.gridy++;
 		chatScreen.add(panel,c);
 		cardsPanel.add(chatScreen, CHAT_SCREEN);
 	}
 	private void isTyping(){
 		if(loggedIn){
-			String s = messageBox.getText().trim();
+			String s = sendMessagePane.getText().trim();
 			int len = s.length();
 			if(len == 1 && s.substring(0,1).equals(".")) s = "";
 			if(len >= 2 && s.substring(0,2).equals("./")) s = "";

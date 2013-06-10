@@ -1,29 +1,23 @@
 package style;
-import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
-import java.awt.GraphicsEnvironment;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
-import java.util.Random;
 
+import javax.swing.AbstractAction;
+import javax.swing.ActionMap;
 import javax.swing.BoxLayout;
+import javax.swing.InputMap;
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.KeyStroke;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import javax.swing.text.BadLocationException;
-import javax.swing.text.DefaultStyledDocument;
-import javax.swing.text.Document;
-import javax.swing.text.SimpleAttributeSet;
-import javax.swing.text.StyleConstants;
 
 
 
@@ -110,30 +104,16 @@ class View extends JFrame{
 		scroll.setPreferredSize(new Dimension(300,80));
 		panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 		this.toolbar = toolbar;
-		box.addKeyListener(new KeyListener(){
+		InputMap input = box.getInputMap();
+		KeyStroke enter = KeyStroke.getKeyStroke("ENTER");
+		input.put(enter, "send");
+		ActionMap actions = box.getActionMap();
+		actions.put("send", new AbstractAction() {
 			@Override
-			public void keyPressed(KeyEvent k) {
-				// TODO Auto-generated method stub
-				if(k.getKeyCode() == KeyEvent.VK_ENTER){
-					send();
+			public void actionPerformed(ActionEvent e) {
+				send();
 				}
-			}
-
-			@Override
-			public void keyReleased(KeyEvent k) {
-				if(k.getKeyCode() == KeyEvent.VK_ENTER){
-					killExtraLine();
-				}
-				
-			}
-
-			@Override
-			public void keyTyped(KeyEvent k) {
-				// TODO Auto-generated method stub
-				
-			}
-			
-		});
+			});
 		toolbar.addListeners(new ItemListener() {
 			@Override
 			public void itemStateChanged(ItemEvent evt) {
