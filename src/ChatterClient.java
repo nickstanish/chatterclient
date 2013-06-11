@@ -566,7 +566,7 @@ class ChatterClient extends Client{
 				boolean cmd = false;
 				// @commands
 				if(s.substring(2).equalsIgnoreCase("help")){
-					display("whoisin\nlogout\nclear\nrealtime\n");
+					display("whoisin\nlogout\nclear\nrealtime\nto [user]:[message]\n");
 					cmd = true;
 				}
 				else if(s.substring(2).equalsIgnoreCase("whoisin")){
@@ -586,6 +586,19 @@ class ChatterClient extends Client{
 					clearChat();
 					cmd = true;
 				}
+				else if(s.substring(2,5).equalsIgnoreCase("to ")){
+					if(s.matches(".+:.+")){
+						try {
+							send('5',s.substring(5));
+						} catch (IOException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+					}
+					else display("  Incorrect Syntax");
+					cmd = true;
+				}
+				
 				else if(s.substring(2).equalsIgnoreCase("realtime")){
 					realtime = !realtime; // toggle realtime on/off
 					try {
@@ -857,6 +870,9 @@ class ChatterClient extends Client{
 			display((String)s);
 			break;
 		case DISCONNECTED:
+			display((String)s);
+			break;
+		case PRIVATE_MESSAGE:
 			display((String)s);
 			break;
 		case MESSAGE:

@@ -14,7 +14,7 @@ public abstract class Client implements Connection, Runnable {
 	private Socket socket;
 	private boolean keepGoing = true;
 	public enum MessageType{
-		MESSAGE, NOTICE, ERROR, TYPING, CONTACTS, DISCONNECTED;
+		MESSAGE, NOTICE, ERROR, TYPING, CONTACTS, DISCONNECTED, PRIVATE_MESSAGE;
 	}
 	@Override
 	public final boolean connect(String username, String host, int port) throws IOException,UsernameTakenException{
@@ -130,7 +130,9 @@ public abstract class Client implements Connection, Runnable {
 				case 'c': //contacts list
 					messageHandler(MessageType.CONTACTS, line.substring(1).split(","));
 					break;
-					
+				case '5': //private message
+					messageHandler(MessageType.PRIVATE_MESSAGE, line.substring(1));
+					break;
 				case 'E': // Error
 					messageHandler(MessageType.ERROR, line.substring(1));
 					break;
