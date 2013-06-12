@@ -1,5 +1,7 @@
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
@@ -43,7 +45,16 @@ public class ContactList extends JWindow implements ListSelectionListener, Runna
 		this.getContentPane().add(scroller);
         list.addListSelectionListener(this);
         menu = new JPopupMenu();
-        menu.add(new JMenuItem("Message"));
+        
+        JMenuItem messageItem = new JMenuItem("Message");
+        messageItem.addActionListener(new ActionListener() {
+			
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				sendMessage(list.getSelectedValue().getName());
+			}
+		});
+        menu.add(messageItem);
         list.setPrototypeCellValue(new Contact(null, "Index 1234567890")); 
         list.addMouseMotionListener(new MouseMotionAdapter() {
         	public void mouseDragged(MouseEvent e){
@@ -59,6 +70,7 @@ public class ContactList extends JWindow implements ListSelectionListener, Runna
         		if (e.getButton() == MouseEvent.BUTTON3) { //if the event shows the menu
         	        list.setSelectedIndex(list.locationToIndex(e.getPoint())); //select the item
         	        Rectangle r = list.getBounds();
+        	        menu.setVisible(true);
         	        menu.show(list, r.x + r.width - menu.getWidth(), list.indexToLocation(list.getSelectedIndex()).y); //and show the menu
         	    }
         	}
@@ -71,8 +83,7 @@ public class ContactList extends JWindow implements ListSelectionListener, Runna
         	
         	public void mouseClicked(MouseEvent e) {
                 if (e.getClickCount() == 2) {
-                    int index = list.locationToIndex(e.getPoint());
-                    System.out.println("Double clicked on Item " + (index + 1));
+                    sendMessage(list.getSelectedValue().getName());
                  }
             }
         });
@@ -102,6 +113,12 @@ public class ContactList extends JWindow implements ListSelectionListener, Runna
 			snap();
 		}
 		
+	}
+	private void sendMessage(String username){
+		if (client != null){
+			client.getSendMessagePane().setText("./to " + username + ":");
+		}
+		else System.out.println(username);
 	}
 	public boolean getSnapped(){
 		return snapped;

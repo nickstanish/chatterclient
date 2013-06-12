@@ -890,4 +890,7 @@ class ChatterClient extends Client{
 		}
 				
 	}
+	public StyledTextPane getSendMessagePane(){
+		return sendMessagePane;
+	}
 }
