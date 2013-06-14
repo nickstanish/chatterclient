@@ -5,8 +5,6 @@ import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.FontFormatException;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -16,7 +14,6 @@ import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
@@ -30,11 +27,9 @@ import java.net.UnknownHostException;
 import java.util.Arrays;
 
 import javax.swing.AbstractAction;
-import javax.swing.ActionMap;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.DropMode;
-import javax.swing.InputMap;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComponent;
@@ -46,7 +41,6 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPasswordField;
-import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import javax.swing.KeyStroke;
 import javax.swing.UIManager;
@@ -54,12 +48,16 @@ import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import javax.swing.text.SimpleAttributeSet;
+import javax.swing.text.StyleConstants;
 
 import network.Client;
 import network.UsernameTakenException;
 import options.Options;
 import options.OptionsPanel;
-import style.StyledTextPane;
+import style.StylePane;
+import style.StyleSendPane;
+import style.StyleViewPane;
 
 class ChatterClient extends Client{
 	/**
@@ -76,7 +74,8 @@ class ChatterClient extends Client{
 	private ContactList contactsList;
 	private JLabel isTypingLabel, loginErrorLabel;
 	private JButton loginButton, advancedButton, sendButton, resetAdvancedButton;
-	private StyledTextPane chatArea, sendMessagePane;
+	private StyleViewPane viewPane;
+	private StyleSendPane sendMessagePane;
 	private boolean loggedIn = false, realtime = false, isTyping = false, focused;
 	private JMenuItem logoutMenu;
 	/*
@@ -92,6 +91,10 @@ class ChatterClient extends Client{
 	private String username, oldRealtime;
 	private Options options = new Options();
 	private TaskbarManager taskbar;
+	
+	public enum DisplayStyle{
+		Message, Notice, Error, Command
+	}
 
 	private NotificationManager notifier;
 	/*
@@ -155,7 +158,6 @@ class ChatterClient extends Client{
 			System.err.println(ffe);
 			font = font1;
 		}
-
 		JLabel titleLabel = new JLabel("ChatterBox");
 		titleLabel.setFont(font);
 		titleLabel.setForeground(new Color(0x6BE400));
@@ -224,7 +226,7 @@ class ChatterClient extends Client{
 		window.setVisible(true);
 		window.setState(JFrame.NORMAL);
 		if(loggedIn){
-			sendMessagePane.requestFocusInWindow();
+			sendMessagePane.getStylePane().requestFocusInWindow();
 		}
 		else{
 			loginBox.requestFocusInWindow();
@@ -244,7 +246,7 @@ class ChatterClient extends Client{
 			if(e instanceof UsernameTakenException){
 				showLoginError("Username taken.");
 			}
-			e.printStackTrace();
+			System.err.println(e.toString());
 			return false;
 		}
 	}
@@ -252,13 +254,32 @@ class ChatterClient extends Client{
 	/*
 	 * To send a message to the console or the GUI
 	 */
-	private void display(String msg) {
+	private void display(String msg, DisplayStyle type) {
 		if(!options.showTime){
 			//fix whoisin time parse bug with a start of line regex - 9/2/12
 			msg = msg.replaceFirst("^(\\d{1,2}:\\d{1,2}:\\d{1,2}[:\\s]{1,2})", "");
 		}
-		chatArea.append(msg, null);		// append to the ClientGUI JTextArea (or whatever)
-		chatArea.setCaretPosition(chatArea.getDocument().getLength());
+		SimpleAttributeSet style = new SimpleAttributeSet();
+		switch(type){
+			case Command:
+				StyleConstants.setBold(style, true);
+				viewPane.appendln(msg, style);
+				break;
+			case Error:
+				StyleConstants.setForeground(style, Color.red);
+				viewPane.appendln(msg, style);
+				break;
+			case Message:
+				viewPane.appendln(msg, null);
+				break;
+			case Notice:
+				viewPane.appendln(msg, null);
+				break;
+			default:
+				break;
+		}
+		
+		
 		/*
 		 * seems like the best way to implement notifications for now
 		 */
@@ -272,7 +293,7 @@ class ChatterClient extends Client{
 
 	}
 	private void clearChat(){
-		chatArea.setText("");
+		viewPane.getStylePane().setText("");
 	}
 	
 	/**
@@ -281,7 +302,7 @@ class ChatterClient extends Client{
 	private void sendMessage(String s) {
 		try {
 			send('0', s);
-			sendMessagePane.requestFocusInWindow();
+			sendMessagePane.getStylePane().requestFocusInWindow();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -558,15 +579,15 @@ class ChatterClient extends Client{
         return true;
     }
 	private void send(){
-		String s = sendMessagePane.getText().trim();
+		String s = sendMessagePane.getStylePane().getText().trim();
 		if(!s.equals("")){
 			int len = s.length();
 			if(len >= 2 && s.substring(0,2).equals("./")){
-				display("#: " + s);
+				display("#: " + s, DisplayStyle.Command);
 				boolean cmd = false;
 				// @commands
 				if(s.substring(2).equalsIgnoreCase("help")){
-					display("whoisin\nlogout\nclear\nrealtime\nto [user]:[message]\n");
+					display("whoisin\nlogout\nclear\nrealtime\nto [user]:[message]\n", DisplayStyle.Command);
 					cmd = true;
 				}
 				else if(s.substring(2).equalsIgnoreCase("whoisin")){
@@ -595,7 +616,7 @@ class ChatterClient extends Client{
 							e.printStackTrace();
 						}
 					}
-					else display("  Incorrect Syntax");
+					else display("  Incorrect Syntax", DisplayStyle.Error);
 					cmd = true;
 				}
 				
@@ -611,14 +632,14 @@ class ChatterClient extends Client{
 				}
 				
 				if(!cmd){
-					display("'"+ s.substring(2) + "' command not found");
+					display("'"+ s.substring(2) + "' command not found" , DisplayStyle.Error);
 				}
 				
 			}
 			else{
 				sendMessage(s);		
 			}	
-			sendMessagePane.setText("");
+			sendMessagePane.getStylePane().setText("");
 		}
 		
 	}
@@ -652,7 +673,7 @@ class ChatterClient extends Client{
 		taskbar.login(true);
 		window.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
 		logoutMenu.setEnabled(true);
-		sendMessagePane.requestFocusInWindow();
+		sendMessagePane.getStylePane().requestFocusInWindow();
 		contactsList.startPolling();
 		
 	}
@@ -678,64 +699,38 @@ class ChatterClient extends Client{
 		hideLoginError();
 	}
 
-	private void createChatScreen(){
-		GridBagConstraints c = new GridBagConstraints();
-		GridBagLayout grid = new GridBagLayout();
-		
+	private void createChatScreen(){		
 		contactsList = new ContactList(this);
-		chatArea = new StyledTextPane();
-		JScrollPane scrollingChatPanel = new JScrollPane(chatArea);
-		scrollingChatPanel.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-		chatScreen = new JPanel();
-		chatScreen.setLayout(grid);
-		JPanel isTypingPanel = new JPanel(new FlowLayout(FlowLayout.LEADING));
-		isTypingLabel = new JLabel(" ");
-		isTypingPanel.add(isTypingLabel);
-		//file = new File("media/background.png");
-		//chatArea.setLineWrap(true);
-		scrollingChatPanel.setPreferredSize(new Dimension(300,200));
-		sendMessagePane = new StyledTextPane();
-		sendMessagePane.setAutoscrolls(true);
-		sendMessagePane.setEditable(true);
-		sendMessagePane.setDragEnabled(true);
-		sendMessagePane.setDropMode(DropMode.INSERT);
-		JScrollPane sendMessageScroller = new JScrollPane(sendMessagePane);
-		sendMessageScroller.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-		InputMap input = sendMessagePane.getInputMap();
-		KeyStroke enter = KeyStroke.getKeyStroke("ENTER");
-		input.put(enter, "sendmessage");
-		ActionMap actions = sendMessagePane.getActionMap();
-		actions.put("sendmessage", new AbstractAction() {
+		viewPane = new StyleViewPane();
+		sendMessagePane = new StyleSendPane();
+		StylePane sendBox = sendMessagePane.getStylePane();
+		sendBox.setAutoscrolls(true);
+		sendBox.setEditable(true);
+		sendBox.setDragEnabled(true);
+		sendBox.setDropMode(DropMode.INSERT);
+		sendMessagePane.setSendAction(new AbstractAction() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				send();
-				}
-			});
-		sendMessagePane.getDocument().addDocumentListener(new DocumentListener(){
+			}
+		});
+		sendBox.getDocument().addDocumentListener(new DocumentListener(){
 			@Override
 			public void changedUpdate(DocumentEvent e) {}
 			@Override
 			public void insertUpdate(DocumentEvent e) {
 				isTyping();
-/* send every other char, works but is unnatural
-				if(toggle){
-					isTyping();
-				}
-				toggle = !toggle;
-				*/
-				
 			}
 			@Override
 			public void removeUpdate(DocumentEvent e) {
 				isTyping();
-/* send every other char
-				if(toggle){
-					isTyping();
-				}
-				toggle = !toggle;
-				*/
 			}
 		});
+		chatScreen = new JPanel();
+		chatScreen.setLayout(new BoxLayout(chatScreen, BoxLayout.Y_AXIS));
+		JPanel isTypingPanel = new JPanel(new FlowLayout(FlowLayout.LEADING));
+		isTypingLabel = new JLabel(" ");
+		isTypingPanel.add(isTypingLabel);
 		sendButton = new JButton("Send");
 		sendButton.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent e){
@@ -744,27 +739,15 @@ class ChatterClient extends Client{
 		});
 		JPanel panel = new JPanel(new FlowLayout(FlowLayout.TRAILING));
 		panel.add(sendButton);
-		c.fill = GridBagConstraints.BOTH;
-		c.weighty = 1.0;   //request any extra vertical space
-		c.weightx = 1.0;   //request any extra hor. space
-		c.anchor = GridBagConstraints.PAGE_START;
-		c.gridy = 0;
-		c.ipady = 60; 
-		chatScreen.add(scrollingChatPanel,c);
-		c.anchor = GridBagConstraints.CENTER;
-		c.weighty = 0;
-		c.ipady = 0; 
-		c.gridy++;
-		chatScreen.add(isTypingPanel,c);
-		c.gridy++;
-		chatScreen.add(sendMessageScroller,c);
-		c.gridy++;
-		chatScreen.add(panel,c);
+		chatScreen.add(viewPane);
+		chatScreen.add(isTypingPanel);
+		chatScreen.add(sendMessagePane);
+		chatScreen.add(panel);
 		cardsPanel.add(chatScreen, CHAT_SCREEN);
 	}
 	private void isTyping(){
 		if(loggedIn){
-			String s = sendMessagePane.getText().trim();
+			String s = sendMessagePane.getStylePane().getText().trim();
 			int len = s.length();
 			if(len == 1 && s.substring(0,1).equals(".")) s = "";
 			if(len >= 2 && s.substring(0,2).equals("./")) s = "";
@@ -867,30 +850,30 @@ class ChatterClient extends Client{
 			contactsList.update((String[])s);
 			break;
 		case ERROR:
-			display((String)s);
+			display((String)s, DisplayStyle.Error);
 			break;
 		case DISCONNECTED:
-			display((String)s);
+			display((String)s, DisplayStyle.Error);
 			break;
 		case PRIVATE_MESSAGE:
-			display((String)s);
+			display((String)s, DisplayStyle.Message);
 			break;
 		case MESSAGE:
-			display((String)s);
+			display((String)s, DisplayStyle.Message);
 			break;
 		case NOTICE:
-			display((String)s);
+			display((String)s, DisplayStyle.Notice);
 			break;
 		case TYPING:
 			isTypingLabel.setText((String)s);
 			break;
 		default:
-			display("  Error:\n " + (String)s);
+			display("  Error:\n " + (String)s, DisplayStyle.Error);
 			break;
 		}
 				
 	}
-	public StyledTextPane getSendMessagePane(){
-		return sendMessagePane;
+	public StylePane getSendMessagePane(){
+		return sendMessagePane.getStylePane();
 	}
 }

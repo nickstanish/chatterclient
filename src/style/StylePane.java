@@ -1,15 +1,21 @@
 package style;
 
 import java.awt.Color;
+import java.awt.Component;
+import java.awt.Font;
 
+import javax.swing.ImageIcon;
+import javax.swing.JLabel;
+import javax.swing.JList;
 import javax.swing.JTextPane;
+import javax.swing.ListCellRenderer;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.DefaultStyledDocument;
 import javax.swing.text.Document;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 
-public abstract class StylePane extends JTextPane{
+public class StylePane extends JTextPane{
 	protected Document doc;
 	protected SimpleAttributeSet style;
 	public StylePane(){
@@ -47,11 +53,14 @@ public abstract class StylePane extends JTextPane{
 	}
 	public void append(String s, SimpleAttributeSet style){	
 	    try{
-	    	 doc.insertString(doc.getLength(),s + "\n", style);
+	    	 doc.insertString(doc.getLength(),s , style);
 	    	 setCaretPosition(doc.getLength());
 	    }
 	    catch(BadLocationException e){
 	    	System.err.println("unable to append: " + e);
 	    }
+	}
+	public void appendln(String s, SimpleAttributeSet style){	
+	    append(s + '\n', style);
 	}
 }
