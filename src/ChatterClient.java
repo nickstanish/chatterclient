@@ -59,6 +59,8 @@ import style.StylePane;
 import style.StyleSendPane;
 import style.StyleViewPane;
 
+import com.google.gson.Gson;
+
 class ChatterClient extends Client{
 	/**
 	 * GUI based client for vizbits chatterbox instant messenger
@@ -78,6 +80,7 @@ class ChatterClient extends Client{
 	private StyleSendPane sendMessagePane;
 	private boolean loggedIn = false, realtime = false, isTyping = false, focused;
 	private JMenuItem logoutMenu;
+	private Gson gson = new Gson();
 	/*
 	 * properties
 	 */
@@ -205,6 +208,9 @@ class ChatterClient extends Client{
 		if(!isInternetReachable()){
 			showLoginError("Default server not available");
 		}
+		Message m = new Message();
+		String json = gson.toJson(m);
+		Message n = gson.fromJson(json, Message.class);
 	}
 	private void advancedLoginShortcut(){
 		if(showAdvancedOptions()){
@@ -306,7 +312,7 @@ class ChatterClient extends Client{
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		}
+		} 
 	}
 					/*
 					System.err.println("Server has close the connection: " + e);
@@ -579,6 +585,7 @@ class ChatterClient extends Client{
         return true;
     }
 	private void send(){
+		//TODO gson
 		String s = sendMessagePane.getStylePane().getText().trim();
 		if(!s.equals("")){
 			int len = s.length();

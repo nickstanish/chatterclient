@@ -1,7 +1,6 @@
 package network;
 
 import java.io.IOException;
-import java.net.SocketException;
 
 public interface Connection{
 	public boolean connect(String username, String host, int port) throws IOException, UsernameTakenException;

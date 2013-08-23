@@ -1,5 +1,8 @@
 package notifications;
 import java.awt.Color;
+import java.awt.GraphicsDevice;
+import java.awt.GraphicsDevice.WindowTranslucency;
+import java.awt.GraphicsEnvironment;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 
@@ -17,6 +20,7 @@ public class NotificationWindow extends JWindow {
 	private static final long serialVersionUID = -3228619876556206647L;
 	private JLabel titleLabel, messageLabel;
 	private String title, message;
+	public static final float TRANSPARENCY = 0.85f;
 	public NotificationWindow(){
 		JComponent comp = (JComponent)getContentPane();
 		title = "";
@@ -37,15 +41,16 @@ public class NotificationWindow extends JWindow {
 		c.weighty = 0.35;
 		comp.add(messageLabel,c);
 		getContentPane().setBackground(new Color(227, 227, 227));	
-		//GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();		
-		/*
-		 * jdk7 only
-		GraphicsDevice gd = ge.getDefaultScreenDevice();
-		if (gd.isWindowTranslucencySupported(TRANSLUCENT)){
-			window.setOpacity(0.75f);
+		if (transparencySupported()){
+			this.setOpacity(TRANSPARENCY);
 		}
-		*/
+		
 		pack();
+	}
+	public static boolean transparencySupported(){
+		GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+		GraphicsDevice gd = ge.getDefaultScreenDevice();
+		return gd.isWindowTranslucencySupported(WindowTranslucency.TRANSLUCENT);
 	}
 	public void setMessage(String message){
 		this.message = message;
